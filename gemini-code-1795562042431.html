@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>アクア・アクーラ v4 | Aqua Akula AI v4 (Autonomous Offline Engine)</title>
+ <style>
+ :root {
+ --bg-ocean: #e8f8ff;
+ --bg-panel: #ffffff;
+ --bg-card: #eefaff;
+ --neon-cyan: #0891b2;
+ --neon-blue: #0369a1;
+ --shark-accent: #f43f5e;
+ --text-main: #0b2b40;
+ --text-muted: #4f7891;
+ --border-glow: #b7e4f3;
+ --font-ui: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+ }
+
+ html[lang="ja"] { --font-ui: 'Segoe UI', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'Hiragino Kaku Gothic ProN', sans-serif; }
+ html[lang="en"] { --font-ui: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
+ html[lang="ko"] { --font-ui: 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+ html[lang="zh"] { --font-ui: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif; }
+
+ * {
+ box-sizing: border-box;
+ margin: 0;
+ padding: 0;
+ font-family: var(--font-ui);
+ }
+
+ body {
+ background-color: var(--bg-ocean);
+ color: var(--text-main);
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ overflow-x: hidden;
+ position: relative;
+ background-image:
+ radial-gradient(ellipse at 50% -10%, rgba(255, 255, 255, 0.95) 0%, transparent 60%),
+ radial-gradient(ellipse at 0% 110%, rgba(14, 165, 233, 0.18) 0%, transparent 55%),
+ radial-gradient(ellipse at 100% 90%, rgba(6, 182, 212, 0.16) 0%, transparent 50%),
+ linear-gradient(180deg, #f4fcff 0%, #dcf3fd 50%, #bfe8fa 100%);
+ }
+
+ #oceanCanvas {
+ position: fixed;
+ top: 0;
+ left: 0;
+ width: 100vw;
+ height: 100vh;
+ z-index: 1;
+ pointer-events: none;
+ }
+
+ header, .chat-wrapper, .settings-panel {
+ position: relative;
+ z-index: 10;
+ }
+
+ header {
+ background: rgba(255, 255, 255, 0.8);
+ backdrop-filter: blur(12px);
+ border-bottom: 1px solid var(--border-glow);
+ padding: 14px 24px;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 12px;
+ box-shadow: 0 4px 18px rgba(3, 105, 161, 0.12);
+ }
+
+ .header-left {
+ display: flex;
+ align-items: center;
+ gap: 14px;
+ min-width: 0;
+ }
+
+ .shark-logo {
+ width: 48px;
+ height: 48px;
+ background: linear-gradient(135deg, #ffffff, #d8f2ff);
+ border: 2px solid #0ea5e9;
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ flex-shrink: 0;
+ box-shadow: 0 0 18px rgba(14, 165, 233, 0.35);
+ animation: pulseGlow 3s infinite alternate;
+ }
+
+ @keyframes pulseGlow {
+ 0% { box-shadow: 0 0 8px rgba(14, 165, 233, 0.25); }
+ 100% { box-shadow: 0 0 22px rgba(6, 182, 212, 0.65); }
+ }
+
+ .header-title h1 {
+ font-size: 1.4rem;
+ letter-spacing: 1px;
+ background: linear-gradient(90deg, #075985, #06b6d4);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ text-transform: uppercase;
+ font-weight: 800;
+ white-space: nowrap;
+ }
+
+ .header-title span {
+ font-size: 0.78rem;
+ color: var(--neon-cyan);
+ font-family: monospace;
+ display: block;
+ }
+
+ .title-row {
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ min-width: 0;
+ }
+
+ .header-title .version-badge {
+ display: inline-block;
+ font-family: monospace;
+ font-size: 0.72rem;
+ font-weight: 800;
+ color: #ffffff;
+ background: linear-gradient(135deg, #0369a1, #06b6d4);
+ border: 1px solid #22d3ee;
+ border-radius: 10px 10px 10px 3px;
+ padding: 2px 9px;
+ line-height: 1.35;
+ letter-spacing: 0.6px;
+ white-space: nowrap;
+ box-shadow: 0 2px 8px rgba(6, 182, 212, 0.35);
+ }
+
+ .header-right {
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ flex-shrink: 0;
+ }
+
+ .header-status {
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ font-size: 0.8rem;
+ font-weight: 600;
+ color: #0b5c74;
+ background: linear-gradient(135deg, #ffffff 0%, #e4f7ff 100%);
+ border: 1px solid #8fd5ea;
+ padding: 6px 13px;
+ border-radius: 20px;
+ white-space: nowrap;
+ box-shadow: 0 2px 8px rgba(3, 105, 161, 0.1);
+ }
+
+ .dict-counter-pill {
+ display: flex;
+ align-items: center;
+ gap: 5px;
+ font-size: 0.75rem;
+ font-weight: 700;
+ font-family: monospace;
+ color: #0369a1;
+ background: rgba(224, 247, 253, 0.9);
+ border: 1px solid #8fd5ea;
+ padding: 5px 10px;
+ border-radius: 16px;
+ white-space: nowrap;
+ }
+
+ .status-dot {
+ width: 8px;
+ height: 8px;
+ background: #06b6d4;
+ border-radius: 50%;
+ flex-shrink: 0;
+ animation: sonarPulse 2s infinite;
+ }
+
+ @keyframes sonarPulse {
+ 0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.45); }
+ 70% { box-shadow: 0 0 0 7px rgba(6, 182, 212, 0); }
+ 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+ }
+
+ .lang-group {
+ display: flex;
+ gap: 6px;
+ }
+
+ .lang-switch {
+ flex: 1;
+ text-align: center;
+ background: rgba(255, 255, 255, 0.8);
+ border: 1px solid var(--border-glow);
+ color: #5b87a0;
+ border-radius: 6px;
+ padding: 6px 9px;
+ font-size: 0.72rem;
+ font-weight: 800;
+ letter-spacing: 0.5px;
+ font-family: monospace;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+
+ .lang-switch:hover {
+ color: #0369a1;
+ border-color: #22d3ee;
+ }
+
+ .lang-switch.active {
+ background: linear-gradient(135deg, #22d3ee, #0284c7);
+ border-color: #0ea5e9;
+ color: #ffffff;
+ box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+ }
+
+ .settings-panel {
+ position: fixed;
+ top: 82px;
+ right: 18px;
+ z-index: 45;
+ width: min(350px, calc(100vw - 28px));
+ background: var(--bg-panel);
+ border: 1px solid var(--border-glow);
+ border-radius: 14px 14px 4px 14px;
+ box-shadow: 0 18px 40px rgba(3, 105, 161, 0.28);
+ display: none;
+ flex-direction: column;
+ overflow: hidden;
+ }
+
+ .settings-panel.open {
+ display: flex;
+ }
+
+ .settings-head {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 10px;
+ padding: 10px 14px;
+ background: linear-gradient(135deg, #0c4a6e, #0369a1);
+ color: #ffffff;
+ }
+
+ .settings-head h3 {
+ font-size: 0.95rem;
+ font-weight: 800;
+ letter-spacing: 0.5px;
+ }
+
+ .settings-close {
+ background: rgba(255, 255, 255, 0.14);
+ border: 1px solid rgba(255, 255, 255, 0.35);
+ color: #ffffff;
+ width: 26px;
+ height: 26px;
+ border-radius: 50%;
+ font-size: 1rem;
+ line-height: 1;
+ cursor: pointer;
+ }
+
+ .settings-body {
+ display: flex;
+ flex-direction: column;
+ gap: 14px;
+ padding: 14px;
+ max-height: 75vh;
+ overflow-y: auto;
+ }
+
+ .settings-section {
+ display: flex;
+ flex-direction: column;
+ gap: 7px;
+ }
+
+ .settings-label {
+ font-size: 0.72rem;
+ font-weight: 800;
+ letter-spacing: 0.8px;
+ text-transform: uppercase;
+ color: var(--text-muted);
+ }
+
+ .settings-hint {
+ margin: 0;
+ font-size: 0.72rem;
+ color: var(--text-muted);
+ line-height: 1.5;
+ }
+
+ .settings-save {
+ align-self: flex-start;
+ background: linear-gradient(135deg, #0ea5e9, #1d4ed8);
+ color: #ffffff;
+ border: none;
+ border-radius: 9px;
+ padding: 8px 14px;
+ font-size: 0.8rem;
+ font-weight: 800;
+ cursor: pointer;
+ box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+ }
+
+ .settings-save.danger {
+ background: linear-gradient(135deg, #f43f5e, #be123c);
+ }
+
+ .theme-toggle {
+ width: 34px;
+ height: 34px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: rgba(255, 255, 255, 0.8);
+ border: 1px solid var(--border-glow);
+ border-radius: 50%;
+ color: #0369a1;
+ cursor: pointer;
+ flex-shrink: 0;
+ transition: all 0.2s;
+ }
+
+ .theme-toggle:hover {
+ border-color: #22d3ee;
+ color: #0891b2;
+ transform: translateY(-1px);
+ }
+
+ .theme-toggle .icon-sun { display: none; }
+ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+ html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+ .mode-select {
+ height: 34px;
+ background: rgba(255, 255, 255, 0.8);
+ border: 1px solid var(--border-glow);
+ border-radius: 18px;
+ color: #0b5c74;
+ padding: 0 10px;
+ font-size: 0.75rem;
+ font-weight: 800;
+ font-family: inherit;
+ cursor: pointer;
+ flex-shrink: 0;
+ }
+
+ .chat-wrapper {
+ max-width: 920px;
+ width: 100%;
+ margin: 18px auto;
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ padding: 0 16px;
+ }
+
+ .context-strip {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 10px;
+ background: rgba(255, 255, 255, 0.72);
+ border: 1px solid var(--border-glow);
+ border-radius: 10px;
+ padding: 6px 14px;
+ margin-bottom: 10px;
+ font-size: 0.76rem;
+ color: var(--text-muted);
+ }
+
+ .context-strip strong {
+ color: var(--neon-blue);
+ }
+
+ .chat-box {
+ background:
+ radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0) 70%),
+ linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(243, 251, 255, 0.88) 100%);
+ backdrop-filter: blur(6px);
+ border: 1px solid var(--border-glow);
+ border-radius: 16px;
+ flex: 1;
+ min-height: 430px;
+ max-height: 540px;
+ padding: 20px;
+ overflow-y: auto;
+ display: flex;
+ flex-direction: column;
+ gap: 16px;
+ box-shadow: inset 0 2px 12px rgba(3, 105, 161, 0.08);
+ scroll-behavior: smooth;
+ }
+
+ .chat-box::-webkit-scrollbar { width: 6px; }
+ .chat-box::-webkit-scrollbar-thumb { background: #a9d7e8; border-radius: 3px; }
+
+ .msg-row {
+ display: flex;
+ gap: 12px;
+ max-width: 86%;
+ animation: msgFade 0.25s ease-out;
+ }
+
+ @keyframes msgFade {
+ from { opacity: 0; transform: translateY(8px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+
+ .msg-row.bot { align-self: flex-start; }
+ .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
+
+ .msg-avatar {
+ width: 38px;
+ height: 38px;
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ flex-shrink: 0;
+ border: 1px solid var(--border-glow);
+ }
+
+ .msg-row.bot .msg-avatar { background: #e3f6ff; border-color: #22d3ee; }
+ .msg-row.user .msg-avatar { background: #dbeafe; border-color: #3b82f6; }
+
+ .msg-bubble {
+ padding: 12px 16px;
+ border-radius: 16px;
+ font-size: 0.95rem;
+ line-height: 1.65;
+ word-break: break-word;
+ position: relative;
+ }
+
+ .msg-row.bot .msg-bubble {
+ background: #eef8ff;
+ border: 1px solid #c6e7f6;
+ border-radius: 16px 16px 16px 4px;
+ color: #103a52;
+ box-shadow: 0 4px 12px rgba(3, 105, 161, 0.1);
+ }
+
+ .msg-row.bot .msg-bubble::after {
+ content: '';
+ position: absolute;
+ left: -5px;
+ bottom: 7px;
+ width: 10px;
+ height: 10px;
+ background: #eef8ff;
+ border-left: 1px solid #c6e7f6;
+ border-bottom: 1px solid #c6e7f6;
+ transform: rotate(45deg);
+ }
+
+ .msg-row.user .msg-bubble {
+ background: linear-gradient(135deg, #0ea5e9, #1d4ed8);
+ border-radius: 16px 16px 4px 16px;
+ color: #ffffff;
+ box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
+ }
+
+ .msg-row.user .msg-bubble::after {
+ content: '';
+ position: absolute;
+ right: -5px;
+ bottom: 7px;
+ width: 10px;
+ height: 10px;
+ background: #1d4ed8;
+ transform: rotate(45deg);
+ }
+
+ .msg-actions {
+ display: flex;
+ justify-content: flex-end;
+ gap: 6px;
+ margin-top: 6px;
+ opacity: 0.75;
+ }
+
+ .msg-actions:hover { opacity: 1; }
+
+ .btn-mini-copy {
+ background: rgba(3, 105, 161, 0.08);
+ border: 1px solid rgba(3, 105, 161, 0.2);
+ color: var(--neon-blue);
+ border-radius: 6px;
+ padding: 2px 7px;
+ font-size: 0.68rem;
+ font-family: monospace;
+ cursor: pointer;
+ }
+
+ .btn-mini-copy:hover {
+ background: rgba(6, 182, 212, 0.18);
+ }
+
+ .shark-radar-tag {
+ font-size: 0.74rem;
+ color: var(--neon-cyan);
+ display: block;
+ margin-bottom: 6px;
+ font-family: monospace;
+ letter-spacing: 0.5px;
+ }
+
+ .quick-bar {
+ display: flex;
+ gap: 8px;
+ margin-top: 4px;
+ overflow-x: auto;
+ padding: 9px 0 4px;
+ }
+
+ .quick-bar::-webkit-scrollbar { height: 5px; }
+ .quick-bar::-webkit-scrollbar-thumb { background: #a9d7e8; border-radius: 3px; }
+
+ .quick-chip {
+ background: linear-gradient(180deg, #ffffff 0%, #eaf9ff 100%);
+ border: 1px solid var(--border-glow);
+ color: #4f7891;
+ border-radius: 16px 16px 3px 16px;
+ padding: 7px 14px;
+ font-size: 0.8rem;
+ cursor: pointer;
+ white-space: nowrap;
+ transition: all 0.2s;
+ box-shadow: 0 2px 6px rgba(3, 105, 161, 0.08);
+ }
+
+ .quick-chip:hover {
+ border-color: #22d3ee;
+ color: #0369a1;
+ transform: translateY(-2px);
+ }
+
+ .input-bar {
+ margin-top: 8px;
+ display: flex;
+ gap: 8px;
+ background: rgba(255, 255, 255, 0.92);
+ border: 1px solid var(--border-glow);
+ border-radius: 12px;
+ padding: 8px 12px;
+ align-items: center;
+ transition: border-color 0.2s;
+ }
+
+ .input-bar:focus-within {
+ border-color: #22d3ee;
+ box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+ }
+
+ .chat-input {
+ flex: 1;
+ background: transparent;
+ border: none;
+ outline: none;
+ color: var(--text-main);
+ font-size: 1rem;
+ min-width: 0;
+ }
+
+ .btn-send {
+ background: linear-gradient(155deg, #0c4a6e 0%, #0369a1 48%, #0ea5e9 100%);
+ border: none;
+ color: #ffffff;
+ font-weight: 800;
+ padding: 10px 18px;
+ border-radius: 12px 4px 12px 12px;
+ cursor: pointer;
+ transition: all 0.2s;
+ display: flex;
+ align-items: center;
+ gap: 7px;
+ flex-shrink: 0;
+ box-shadow: 0 6px 16px rgba(3, 105, 161, 0.28);
+ }
+
+ .btn-send:hover {
+ filter: brightness(1.08);
+ transform: translateY(-1px);
+ }
+
+ .btn-dict {
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ flex-shrink: 0;
+ background: rgba(224, 247, 253, 0.9);
+ color: #0369a1;
+ border: 1px solid #9ad9ec;
+ border-radius: 10px;
+ padding: 9px 13px;
+ font-size: 0.85rem;
+ font-weight: 800;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+
+ .btn-dict.active {
+ background: linear-gradient(155deg, #0369a1 0%, #0ea5e9 100%);
+ border-color: #0369a1;
+ color: #ffffff;
+ box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.32);
+ }
+
+ .input-bar.dict-mode {
+ border-color: #22d3ee;
+ box-shadow: 0 0 14px rgba(6, 182, 212, 0.3);
+ }
+
+ .trainer-card {
+ margin-top: 12px;
+ background: var(--bg-panel);
+ border: 1px solid var(--border-glow);
+ border-radius: 12px;
+ padding: 14px 18px;
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ }
+
+ .trainer-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ gap: 10px;
+ cursor: pointer;
+ }
+
+ .trainer-header h3 {
+ font-size: 0.95rem;
+ color: var(--neon-cyan);
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ }
+
+ .trainer-body {
+ display: none;
+ gap: 10px;
+ flex-direction: column;
+ margin-top: 8px;
+ padding-top: 10px;
+ border-top: 1px solid rgba(3, 105, 161, 0.1);
+ }
+
+ .trainer-body.open { display: flex; }
+
+ .trainer-inputs {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 10px;
+ }
+
+ .sub-input {
+ background: #f6fcff;
+ border: 1px solid var(--border-glow);
+ border-radius: 6px;
+ padding: 8px 12px;
+ color: var(--text-main);
+ font-size: 0.85rem;
+ outline: none;
+ }
+
+ .btn-learn {
+ background: rgba(6, 182, 212, 0.12);
+ border: 1px solid #06b6d4;
+ color: #0e7490;
+ padding: 8px 14px;
+ border-radius: 6px;
+ cursor: pointer;
+ font-weight: bold;
+ align-self: flex-start;
+ }
+
+ .btn-learn:hover {
+ background: #06b6d4;
+ color: #ffffff;
+ }
+
+ .learned-list {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 6px;
+ margin-top: 4px;
+ }
+
+ .learned-tag {
+ display: inline-flex;
+ align-items: center;
+ gap: 6px;
+ background: var(--bg-card);
+ border: 1px solid var(--border-glow);
+ border-radius: 14px;
+ padding: 3px 10px;
+ font-size: 0.75rem;
+ }
+
+ .learned-tag button {
+ background: none;
+ border: none;
+ color: #f43f5e;
+ font-weight: bold;
+ cursor: pointer;
+ }
+
+ /* Dark Mode */
+ html[data-theme="dark"] {
+ --bg-ocean: #06141d;
+ --bg-panel: #0d2433;
+ --bg-card: #102a39;
+ --neon-cyan: #22d3ee;
+ --neon-blue: #38bdf8;
+ --text-main: #dcf3fb;
+ --text-muted: #8fb4c6;
+ --border-glow: #1a4a5e;
+ }
+
+ html[data-theme="dark"] body {
+ background-image: linear-gradient(180deg, #04121b 0%, #071f2b 50%, #0a2b3a 100%);
+ }
+
+ html[data-theme="dark"] header {
+ background: rgba(7, 24, 34, 0.88);
+ }
+
+ html[data-theme="dark"] .header-title h1 {
+ background-image: linear-gradient(90deg, #7dd3fc, #22d3ee);
+ }
+
+ html[data-theme="dark"] .header-status,
+ html[data-theme="dark"] .dict-counter-pill,
+ html[data-theme="dark"] .lang-switch,
+ html[data-theme="dark"] .theme-toggle,
+ html[data-theme="dark"] .mode-select,
+ html[data-theme="dark"] .context-strip {
+ background: rgba(13, 36, 51, 0.88);
+ border-color: #1c5a70;
+ color: #9fdcf0;
+ }
+
+ html[data-theme="dark"] .chat-box {
+ background: linear-gradient(180deg, rgba(10, 34, 48, 0.85) 0%, rgba(7, 26, 37, 0.9) 100%);
+ }
+
+ html[data-theme="dark"] .msg-row.bot .msg-bubble {
+ background: #0f2a38;
+ border-color: #1b4a5e;
+ color: #d9f1fb;
+ }
+
+ html[data-theme="dark"] .msg-row.bot .msg-bubble::after {
+ background: #0f2a38;
+ border-left-color: #1b4a5e;
+ border-bottom-color: #1b4a5e;
+ }
+
+ html[data-theme="dark"] .quick-chip {
+ background: #0f2937;
+ color: #8fb4c6;
+ }
+
+ html[data-theme="dark"] .input-bar {
+ background: rgba(13, 36, 51, 0.92);
+ }
+
+ html[data-theme="dark"] .btn-dict {
+ background: rgba(13, 47, 62, 0.9);
+ color: #7dd3fc;
+ border-color: #1c5a70;
+ }
+
+ html[data-theme="dark"] .sub-input {
+ background: #0b2230;
+ }
+
+ @media (max-width: 820px) {
+ .header-status { display: none; }
+ }
+ @media (max-width: 640px) {
+ .trainer-inputs { grid-template-columns: 1fr; }
+ .dict-counter-pill { display: none; }
+ }
+ </style>
+</head>
+<body>
+
+ <canvas id="oceanCanvas"></canvas>
+
+ <header>
+ <div class="header-left">
+ <div class="shark-logo">
+ <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+ <path d="M4 20C4 20 6 12 11 8C14 5.6 18 3 20 3C19 8 18 13 14 16C10 19 6 20 4 20Z" fill="#0284c7" opacity="0.9"/>
+ <path d="M4 20L11 15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+ </svg>
+ </div>
+ <div class="header-title">
+ <div class="title-row">
+ <h1 id="appTitle">アクア・アクーラ</h1>
+ <span class="version-badge">v4</span>
+ </div>
+ <span>AQUA AKULA AI v4 // CONTEXT &amp; FUZZY SONAR // OFFLINE</span>
+ </div>
+ </div>
+ <div class="header-right">
+ <div class="dict-counter-pill" id="dictCounterPill">📚 4言語辞書: 0語</div>
+ <div class="header-status">
+ <span class="status-dot"></span>
+ <span id="headerStatus">深海ソナーv4稼働中（API不採用）</span>
+ </div>
+ <select id="modeSelect" class="mode-select" title="応答モードを切り替え">
+ <option value="fast">高速モード</option>
+ <option value="pro">proモード</option>
+ </select>
+ <button class="theme-toggle" id="themeBtn" type="button" aria-pressed="false" title="ダークモードに切り替え">
+ <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+ </svg>
+ <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ <circle cx="12" cy="12" r="4.2"/>
+ <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2"/>
+ </svg>
+ </button>
+ <button class="theme-toggle settings-toggle" id="settingsBtn" type="button" title="設定">
+ <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ <circle cx="12" cy="12" r="3.2"/>
+ <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1Z"/>
+ </svg>
+ </button>
+ </div>
+ </header>
+
+ <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="設定">
+ <div class="settings-head">
+ <h3 id="settingsTitleText">設定 (v4)</h3>
+ <button class="settings-close" id="settingsClose" type="button">×</button>
+ </div>
+ <div class="settings-body">
+ <div class="settings-section">
+ <div class="settings-label" id="langSectionLabel">言語設定</div>
+ <div class="lang-group" id="langGroup">
+ <button class="lang-switch active" type="button" data-lang="ja">JA</button>
+ <button class="lang-switch" type="button" data-lang="en">EN</button>
+ <button class="lang-switch" type="button" data-lang="ko">KO</button>
+ <button class="lang-switch" type="button" data-lang="zh">ZH</button>
+ </div>
+ </div>
+ <div class="settings-section">
+ <div class="settings-label">ファイル読込・保存・エクスポート</div>
+ <div style="display:flex; gap:8px; flex-wrap:wrap;">
+ <label class="settings-save" style="cursor:pointer; display:inline-block;">
+ 辞書/学習ファイル読込
+ <input type="file" id="importFileInput" accept=".txt,.json,.csv,.md" style="display:none;">
+ </label>
+ <button class="settings-save" id="exportMemBtn" type="button">学習データ書き出し</button>
+ <button class="settings-save" id="saveLogBtn" type="button">会話ログ保存</button>
+ </div>
+ <p class="settings-hint">UTF-8 / Shift-JIS自動判別、カタカナ・絵文字完全対応。チャット欄へのドラッグ＆ドロップでも読み込めます。</p>
+ </div>
+ <div class="settings-section">
+ <div class="settings-label">サメ遊泳アニメーション</div>
+ <label style="display:flex; align-items:center; justify-content:space-between; font-size:0.85rem; cursor:pointer; font-weight:600;">
+ <span>背景ですいすい泳ぐ</span>
+ <input type="checkbox" id="swimToggle" checked style="width:18px; height:18px; accent-color:#0284c7;">
+ </label>
+ <p class="settings-hint">画面の空き場所をクリックするとエサ（クリスタル）を投げられます！</p>
+ </div>
+ <div class="settings-section">
+ <div class="settings-label">メモリ管理</div>
+ <button class="settings-save danger" id="clearChatBtn" type="button">チャット履歴をクリア</button>
+ </div>
+ </div>
+ </div>
+
+ <div class="chat-wrapper">
+ <div class="context-strip">
+ <span id="contextUserStatus">👤 相棒: 未登録（「名前は〇〇」で記憶）</span>
+ <span id="contextTopicStatus">🎯 直前の話題: なし</span>
+ </div>
+
+ <div class="chat-box" id="chatBox">
+ <div class="msg-row bot">
+ <div class="msg-avatar">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="#0284c7">
+ <path d="M4 20C4 20 6 12 11 8C14 5.6 18 3 20 3C19 8 18 13 14 16C10 19 6 20 4 20Z"/>
+ </svg>
+ </div>
+ <div class="msg-bubble" id="welcomeBubble"></div>
+ </div>
+ </div>
+
+ <div class="quick-bar" id="quickBar"></div>
+
+ <div class="input-bar">
+ <input type="text" id="userInput" class="chat-input" placeholder="v4に話しかける... (文脈記憶 / 関数電卓 / 4言語曖昧辞書検索 / 名前記憶)">
+ <button class="btn-dict" id="dictBtn" type="button" aria-pressed="false" title="辞書検索モード">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+ <circle cx="10.5" cy="10.5" r="6.5"/>
+ <path d="M15.5 15.5L21 21"/>
+ </svg>
+ <span id="dictLabel">辞書</span>
+ </button>
+ <button class="btn-send" id="sendBtn" type="button">
+ <span id="sendLabel">噛みつく</span>
+ </button>
+ </div>
+
+ <div class="trainer-card">
+ <div class="trainer-header" id="trainerHeader" role="button" tabindex="0">
+ <h3 id="trainerTitleText">アクア・アクーラの調教（新しい言葉・知識を教える）</h3>
+ <span id="trainerToggleIcon" style="color:var(--text-muted); font-size:0.8rem;">▼ 開く</span>
+ </div>
+ <div class="trainer-body" id="trainerBody">
+ <p id="trainerHelp" style="font-size:0.8rem; color:var(--text-muted);">
+ 新しい単語と返答を覚えさせることができます（LocalStorageに保存され、v4の自律推論エンジンに即座に統合されます）。
+ </p>
+ <div class="trainer-inputs">
+ <input type="text" id="trainKeyword" class="sub-input" placeholder="キーワード (例: 好きな寿司ネタ)">
+ <input type="text" id="trainResponse" class="sub-input" placeholder="アクア・アクーラの返答 (例: 中トロだ！一瞬で丸呑みしてやるぜ！)">
+ </div>
+ <button class="btn-learn" id="learnBtn" type="button">サメに学習させる ⚡</button>
+ <div class="learned-list" id="learnedList"></div>
+ </div>
+ </div>
+ </div>
+
+ <script>
+ const LANGS = ['ja', 'en', 'ko', 'zh'];
+
+ const UI = {
+ ja: {
+ title: 'アクア・アクーラ',
+ status: '深海ソナーv4稼働中（API不採用）',
+ dictBadge: n => `📚 4言語辞書: ${n}語`,
+ welcomeTag: 'AQUA_AKULA_V4: 起動完了',
+ welcome: 'よう、相棒！オレは進化した深海の王者<strong>「アクア・アクーラ v4」</strong>だ！🦈⚡<br>' +
+ '外部API不採用の完全ローカル推論エンジンが<strong>v4世代</strong>へ大幅アップデートされたぜ！<br><br>' +
+ '<strong>【v4の新機能】</strong><br>' +
+ '① <strong>文脈・ユーザー名記憶</strong>：「オレの名前は〇〇」で相棒の名を呼び、直前の話題も記憶！<br>' +
+ '② <strong>proモード深層推論</strong>：右上のモード切替で構造化分析＆関連語連想を展開！<br>' +
+ '③ <strong>ファジー曖昧辞書＆関数電卓</strong>：スペルミス補正や <code>(12 + 8) * 3</code>、<code>sqrt(144)</code> も一撃ハント！',
+ placeholder: 'メッセージ・単語・数式を入力 (例: 名前はタロウ / (25+15)*3 / 深海 / shark)...',
+ send: '噛みつく',
+ dict: '辞書',
+ trainerTitle: 'アクア・アクーラの調教（新しい言葉・知識を教える）',
+ trainerHelp: '新しい単語と返答を覚えさせることができます（ブラウザのLocalStorageに保存）。',
+ kwPlaceholder: 'キーワード (例: 好きな寿司ネタ)',
+ resPlaceholder: 'アクア・アクーラの返答 (例: 中トロだ！一瞬で丸呑みしてやるぜ！)',
+ learn: 'サメに学習させる ⚡',
+ open: '▼ 開く',
+ close: '▲ 閉じる',
+ alertEmpty: 'キーワードと返答の両方を入力してください！',
+ trained: kw => `キーワード【${kw}】をv4神経網に焼き付けたぜ！今度話しかけてみろ！`
+ },
+ en: {
+ title: 'AQUA AKULA',
+ status: 'Deep-sea sonar v4 active (no API)',
+ dictBadge: n => `📚 4-Lang Dict: ${n} words`,
+ welcomeTag: 'AQUA_AKULA_V4: ONLINE',
+ welcome: 'Yo, partner! I am <strong>AQUA AKULA v4</strong>! 🦈⚡<br>' +
+ 'Upgraded to <strong>v4 Autonomous Local Inference</strong> with zero external APIs:<br><br>' +
+ '• <strong>Context & Name Memory</strong>: Tell me "My name is Alex" and I will remember you & recent topics!<br>' +
+ '• <strong>Pro Mode Deep Analysis</strong>: Switch to Pro Mode in the header for structured breakdowns & related concepts.<br>' +
+ '• <strong>Fuzzy 4-Lang Search & Scientific Math</strong>: Handles typos and expressions like <code>(12 + 8) * 3</code>!',
+ placeholder: 'Type message, word, or math (e.g. My name is Alex / (25+15)*3 / shark)...',
+ send: 'Bite',
+ dict: 'Dictionary',
+ trainerTitle: 'Shark training (teach me new words)',
+ trainerHelp: 'Teach me custom keyword-to-reply pairs saved in your browser LocalStorage.',
+ kwPlaceholder: 'Keyword (e.g. favorite sushi)',
+ resPlaceholder: 'Reply (e.g. Fatty tuna! Swallowed whole!)',
+ learn: 'Teach the shark ⚡',
+ open: '▼ Open',
+ close: '▲ Close',
+ alertEmpty: 'Please enter both a keyword and a reply!',
+ trained: kw => `Burned keyword [${kw}] into my v4 neural memory!`
+ },
+ ko: {
+ title: '아쿠아 아쿨라',
+ status: '심해 소나 v4 가동 중 (API 미사용)',
+ dictBadge: n => `📚 4개국어 사전: ${n}어`,
+ welcomeTag: 'AQUA_AKULA_V4: 기동 완료',
+ welcome: '여어, 파트너! 나는 진화한 심해의 제왕 <strong>「아쿠아 아쿨라 v4」</strong>다! 🦈⚡<br>' +
+ '완전 로컬 추론 엔진이 <strong>v4 세대</strong>로 업그레이드되었다!<br><br>' +
+ '• <strong>문맥 및 이름 기억</strong>: "내 이름은 민수야"라고 말하면 이름과 직전 주제를 기억한다!<br>' +
+ '• <strong>pro 모드 심층 분석</strong>: 상단에서 pro 모드로 전환하면 연관 개념까지 분석!<br>' +
+ '• <strong>퍼지 유사도 사전 & 공학 계산</strong>: 오타 보정 및 <code>(12 + 8) * 3</code> 계산 지원!',
+ placeholder: '메시지, 단어 또는 수식 입력 (예: 내 이름은 민수 / (25+15)*3 / 상어)...',
+ send: '물어뜯기',
+ dict: '사전',
+ trainerTitle: '아쿠아 아쿨라 조교 (새 단어 가르치기)',
+ trainerHelp: '새로운 키워드와 답변을 브라우저 LocalStorage에 저장하여 즉시 학습시킵니다.',
+ kwPlaceholder: '키워드',
+ resPlaceholder: '답변',
+ learn: '상어에게 학습시키기 ⚡',
+ open: '▼ 열기',
+ close: '▲ 닫기',
+ alertEmpty: '키워드와 답변을 모두 입력해 주세요!',
+ trained: kw => `키워드【${kw}】를 v4 메모리에 새겼다!`
+ },
+ zh: {
+ title: 'AQUA AKULA',
+ status: '深海声纳 v4 运行中（不采用 API）',
+ dictBadge: n => `📚 四语词典: ${n}词`,
+ welcomeTag: 'AQUA_AKULA_V4: 启动完成',
+ welcome: '哟，搭档！我是进化的深海之王 <strong>「AQUA AKULA v4」</strong>！🦈⚡<br>' +
+ '纯本地离线推理引擎正式升级至 <strong>v4 世代</strong>：<br><br>' +
+ '• <strong>上下文与姓名记忆</strong>：说“我叫小明”即可记住你的名字和当前话题！<br>' +
+ '• <strong>pro 模式深度推理</strong>：在右上角切换 pro 模式可展开结构化分析与关联词联想！<br>' +
+ '• <strong>模糊容错四语词典 & 函数计算</strong>：支持拼写纠错及 <code>(12 + 8) * 3</code> 复杂算式！',
+ placeholder: '输入消息、词汇或算式 (例: 我叫小明 / (25+15)*3 / 鲨鱼)...',
+ send: '咬一口',
+ dict: '词典',
+ trainerTitle: 'AQUA AKULA训练（教它新词）',
+ trainerHelp: '你可以自定义关键词和回答（保存在浏览器 LocalStorage 中）。',
+ kwPlaceholder: '关键词',
+ resPlaceholder: '回答',
+ learn: '让鲨鱼学习 ⚡',
+ open: '▼ 展开',
+ close: '▲ 收起',
+ alertEmpty: '请同时输入关键词和回答！',
+ trained: kw => `关键词【${kw}】已经刻进 v4 记忆！`
+ }
+ };
+
+ const CHIPS = [
+ { icon: '🦈', label: { ja: 'v4の進化点', en: 'v4 Upgrades', ko: 'v4 진화 포인트', zh: 'v4 进化点' }, text: { ja: '自己紹介して！', en: 'Introduce yourself!', ko: '자기소개 해줘!', zh: '介绍一下你自己！' } },
+ { icon: '👤', label: { ja: '名前を教える', en: 'Tell my name', ko: '이름 알려주기', zh: '告诉名字' }, text: { ja: 'オレの名前はカイだ！', en: 'My name is Kai!', ko: '내 이름은 카이야!', zh: '我叫凯！' } },
+ { icon: '🔍', label: { ja: '辞書検索モード', en: 'Dictionary mode', ko: '사전 검색 모드', zh: '词典模式' }, text: { ja: '辞書検索', en: 'Dictionary search', ko: '사전 검색', zh: '词典查询' }, focusInput: true },
+ { icon: '🌊', label: { ja: '深海 (4言語)', en: 'Deep sea (4-lang)', ko: '심해 (4개국어)', zh: '深海 (四语)' }, text: { ja: '深海', en: 'deep sea', ko: '심해', zh: '深海' } },
+ { icon: '🧮', label: { ja: '関数計算', en: 'Complex math', ko: '복합 계산', zh: '复合计算' }, text: { ja: '(125 + 75) * 4 は？', en: 'What is (125 + 75) * 4?', ko: '(125 + 75) * 4는?', zh: '(125 + 75) * 4 等于几？' } },
+ { icon: '🔮', label: { ja: 'サメ占い', en: 'Shark fortune', ko: '상어 점', zh: '鲨鱼占卜' }, text: { ja: '今日の運勢を占って！', en: 'Tell my fortune!', ko: '오늘 운세 봐줘!', zh: '算算今天的运势！' } },
+ { icon: '✊', label: { ja: 'じゃんけん', en: 'RPS Battle', ko: '가위바위보', zh: '猜拳' }, text: { ja: 'じゃんけんしようぜ！', en: "Let's play RPS!", ko: '가위바위보 하자!', zh: '来猜拳吧！' } }
+ ];
+
+ const MULTI_VOCAB_RAW = [["鮫", "さめ", "N", "shark | cartilaginous predatory fish", "鲨鱼 | 海洋中的软骨掠食性鱼类", "상어 | 연골을 가진 해양 포식성 어류", "軟骨魚綱に属する海洋の捕食性魚類。"], ["深海", "しんかい", "N", "deep sea | ocean depth below 200 meters", "深海 | 水深200米以下的海洋区域", "심해 | 수심 200미터 이하의 깊은 바다", "水深200メートル以深の太陽光がほとんど届かない海の領域。"], ["海流", "かいりゅう", "N", "ocean current | continuous movement of seawater", "洋流 | 海水大规模的定向流动", "해류 | 바닷물의 대규모 지속적 흐름", "地球規模で一定方向に流れる海水の大きな流れ。"], ["鯨", "くじら", "N", "whale | large marine mammal", "鲸鱼 | 海洋中的大型哺乳动物", "고래 | 바다에 사는 대형 포유류", "海洋に生息する大型の哺乳類。"], ["イルカ", "いるか", "N", "dolphin | intelligent toothed cetacean", "海豚 | 聪明的齿鲸类海洋哺乳动物", "돌고래 | 지능이 높은 이빨고래류 포유류", "知能が高く群れで行動する小型のハクジラ類。"], ["珊瑚", "さんご", "N", "coral | marine invertebrate forming reefs", "珊瑚 | 构成珊瑚礁的海洋无脊椎动物", "산호 | 산호초를 형성하는 해양 무척추동물", "ポリプが集まって骨格を形成する刺胞動物。"], ["海溝", "かいこう", "N", "ocean trench | deep narrow depression on seafloor", "海沟 | 海底深而狭长的凹陷地形", "해구 | 해저의 깊고 좁은 골짜기 지형", "プレートの沈み込みによってできる極めて深い海底の溝。"], ["波", "なみ", "N", "wave | moving ridge on the surface of water", "波浪 | 水面起伏移动的波动", "파도 | 수면이 오르내리며 밀려오는 물결", "風などの力によって海面に生じる起伏運動。"], ["潮汐", "ちょうせき", "N", "tide | periodic rise and fall of sea level", "潮汐 | 海水周期性的涨落现象", "조석 | 달과 태양의 인력으로 해수면이 오르내리는 현상", "月や太陽の引力による海面の周期的な昇降現象。"], ["潜水艦", "せんすいかん", "N", "submarine | underwater naval vessel", "潜艇 | 能在水下航行的舰艇", "잠수함 | 물속에서 항해할 수 있는 함선", "水中を潜航して活動できる特殊な船舶。"], ["ソナー", "そなー", "N", "sonar | underwater acoustic detection system", "声纳 | 利用声波进行水下探测的装置", "소나 | 음파를 이용해 수중 물체를 탐지하는 장치", "音波を発射し反射波から水中の物体を探知する装置。"], ["水圧", "すいあつ", "N", "water pressure | pressure exerted by water", "水压 | 水对物体产生的压力", "수압 | 물의 무게로 인해 작용하는 압력", "水の重さによって生じる圧力。深海ほど高くなる。"], ["発光生物", "はっこうせいぶつ", "N", "bioluminescent organism | creature producing light", "发光生物 | 自身能发出冷光的生物", "발광 생물 | 스스로 빛을 내는 생물", "体内の化学反応によって自ら光を放つ生物。"], ["プランクトン", "ぷらんくとん", "N", "plankton | drifting microscopic aquatic organisms", "浮游生物 | 随水流漂浮的微小生物", "플랑크톤 | 물속을 떠다니는 미세 생물", "水中を浮遊して生活する微小な生物の総称。"], ["マグロ", "まぐろ", "N", "tuna | fast-swimming large oceanic fish", "金枪鱼 | 高速游动的大型大洋鱼类", "참치 | 빠르게 헤엄치는 대형 회유성 어류", "外洋を高速で回遊するサバ科の大型魚。"], ["アザラシ", "あざらし", "N", "seal | fin-footed marine mammal", "海豹 | 鳍足类海洋哺乳动物", "물범 | 지느러미발을 가진 해양 포유류", "寒冷な海に生息する鰭脚類の海獣。"], ["ウミガメ", "うみがめ", "N", "sea turtle | marine reptile with flippers", "海龟 | 适应海洋生活的爬行动物", "바다거북 | 바다 생활에 적응한 파충류", "四肢がひれ状に発達した海洋性のカメ。"], ["クラゲ", "くらげ", "N", "jellyfish | gelatinous umbrella-shaped marine animal", "水母 | 伞状胶质海洋浮游动物", "해파리 | 우산 모양의 젤라틴질 해양 동물", "ゼラチン質の傘を持ち水中を漂う刺胞動物。"], ["タコ", "たこ", "N", "octopus | eight-armed intelligent mollusk", "章鱼 | 有八条腕足的聪明软体动物", "문어 | 여덟 개의 다리를 가진 지능 높은 연체동물", "8本の腕と高い学習能力を持つ頭足類。"], ["イカ", "いか", "N", "squid | ten-armed fast marine cephalopod", "鱿鱼 | 有十条腕足的海洋头足类", "오징어 | 열 개의 다리를 가진 해양 두족류", "流線型の体と10本の腕を持つ頭足類。"], ["人工知能", "じんこうちのう", "N", "artificial intelligence | machine intelligence", "人工智能 | 模拟人类智能的计算机技术", "인공지능 | 인간의 지능을 모방하는 컴퓨터 기술", "学習・推論・認識など人間の知的活動を計算機上で実現する技術。"], ["機械学習", "きかいがくしゅう", "N", "machine learning | algorithms learning from data", "机器学习 | 从数据中自动学习规律的算法", "기계학습 | 데이터로부터 패턴을 학습하는 알고리즘", "データから規則性やパターンを自動的に学習するAIの手法。"], ["深層学習", "しんそうがくしゅう", "N", "deep learning | multi-layer neural network learning", "深度学习 | 基于多层神经网络的学习方法", "딥러닝 | 다층 신경망을 활용한 기계학습 기법", "多層のニューラルネットワークを用いる機械学習の代表的手法。"], ["アルゴリズム", "あるごりずむ", "N", "algorithm | step-by-step problem-solving procedure", "算法 | 解决问题的明确计算步骤", "알고리즘 | 문제를 해결하기 위한 단계적 절차", "問題を解決するための明確な計算手順や処理方法。"], ["データベース", "でーたべーす", "N", "database | organized collection of structured data", "数据库 | 按结构组织存储的数据集合", "데이터베이스 | 체계적으로 구조화되어 저장된 데이터 집합", "検索や更新が容易なように整理・統合されたデータの集合。"], ["暗号化", "あんごうか", "N", "encryption | encoding data for security", "加密 | 将明文转换为密文以保护信息", "암호화 | 데이터를 보호하기 위해 부호화하는 과정", "第三者に内容を読み取られないようデータを変換すること。"], ["プライバシー", "ぷらいばしー", "N", "privacy | right to keep personal information private", "隐私 | 个人不愿公开的私密信息与权利", "프라이버시 | 개인의 사생활 및 개인정보 보호 권리", "個人の私生活や情報を他者に干渉・公開されない権利。"], ["ブラウザ", "ぶらうざ", "N", "web browser | software for viewing web pages", "浏览器 | 用于访问和显示网页的软件", "브라우저 | 웹 페이지를 탐색하고 표시하는 소프트웨어", "Webサイトを閲覧するためのアプリケーションソフトウェア。"], ["オフライン", "おふらいん", "N", "offline | not connected to the internet", "离线 | 未连接到互联网的状态", "오프라인 | 인터넷에 연결되지 않은 상태", "ネットワークやインターネットに接続されていない状態。"], ["ローカル", "ろーかる", "N", "local | operating directly on the user's device", "本地 | 直接在用户当前设备上运行", "로컬 | 외부 서버가 아닌 사용자 기기 내부 환경", "外部サーバーではなく手元の端末内部で動作する環境。"], ["サーバー", "さーばー", "N", "server | computer providing services over a network", "服务器 | 在网络中提供计算与数据服务的计算机", "서버 | 네트워크를 통해 데이터나 서비스를 제공하는 컴퓨터", "ネットワーク経由で他の端末に機能やデータを提供する装置。"], ["プログラム", "ぷろぐらむ", "N", "program | set of instructions for a computer", "程序 | 计算机执行任务的一系列指令", "프로그램 | 컴퓨터가 작업을 수행하도록 작성된 명령어 집합", "コンピュータに特定の処理を実行させるための命令の集まり。"], ["変数", "へんすう", "N", "variable | named storage location in programming", "变量 | 程序中用于存储可变数据的标识符", "변수 | 프로그래밍에서 값을 저장하는 메모리 공간", "プログラム中でデータを一時的に格納しておく名前付きの領域。"], ["関数", "かんすう", "N", "function | reusable block of code", "函数 | 可重复调用的独立代码块", "함수 | 특정 작업을 수행하는 재사용 가능한 코드 블록", "入力値を受け取り処理を行って結果を返す一連の処理単位。"], ["配列", "はいれつ", "N", "array | ordered collection of elements", "数组 | 按顺序排列的同类型元素集合", "배열 | 순서대로 나열된 데이터의 집합 구조", "複数のデータを順序付けて連続的に格納するデータ構造。"], ["正規表現", "せいきひょうげん", "N", "regular expression | pattern for matching text", "正则表达式 | 用于匹配和检索文本的模式", "정규 표현식 | 문자열의 패턴을 표현하고 검색하는 식", "文字列の集合を一つのパターンで表現する表記法。"], ["文字コード", "もじこーど", "N", "character encoding | mapping characters to bytes", "字符编码 | 将字符映射为计算机二进制的规则", "문자 인코딩 | 문자를 컴퓨터가 처리할 수 있는 부호로 변환하는 체계", "コンピュータ上で文字を扱うために各文字に割り当てた数値体系。"], ["メモリ", "めもり", "N", "memory | computer data storage hardware", "内存 | 计算机用于临时存储数据的部件", "메모리 | 컴퓨터가 데이터와 명령을 저장하는 기억 장치", "コンピュータが処理中のデータやプログラムを記憶する装置。"], ["量子コンピュータ", "りょうしこんぴゅーた", "N", "quantum computer | computer using quantum mechanics", "量子计算机 | 利用量子力学原理进行计算的设备", "양자 컴퓨터 | 양자역학 원리를 이용해 연산하는 차세대 컴퓨터", "量子重ね合わせや量子もつれを利用して並列計算を行う計算機。"], ["半導体", "はんどうたい", "N", "semiconductor | material with controllable conductivity", "半导体 | 导电性介于导体与绝缘体之间的材料", "반도체 | 도체와 부도체의 중간 성질을 가진 전자 부품 소재", "温度や不純物によって電気伝導性が変化する電子回路の基盤材料。"], ["挨拶", "あいさつ", "N", "greeting | polite words exchanged when meeting", "问候 | 见面或分别时表达礼貌的话语", "인사 | 만나거나 헤어질 때 나누는 예의 바른 말이나 행동", "人と会った時や別れる時に交わす礼儀的な言葉や動作。"], ["感謝", "かんしゃ", "N", "gratitude | feeling of thankfulness", "感谢 | 对他人帮助心怀感激之情", "감사 | 고마움을 느끼고 표현하는 마음", "ありがたいと思う気持ちやそれを表すこと。"], ["約束", "やくそく", "N", "promise | assurance that one will do something", "约定 | 双方商定并保证履行的事情", "약속 | 앞으로의 일을 서로 정하여 지키기로 함", "人と人との間で今後の事柄を取り決めること。"], ["習慣", "しゅうかん", "N", "habit | regular repeated behavior", "习惯 | 长期重复形成的行为方式", "습관 | 오랫동안 되풀이하여 몸에 익은 행동 방식", "日常の決まりきった行いや繰り返し身についた行動。"], ["時間", "じかん", "N", "time | continuous progression of existence", "时间 | 物质运动变化的持续性与顺序", "시간 | 시각과 시각 사이의 길이 또는 흐름", "時の流れやある期間の長さ。"], ["今日", "きょう", "N", "today | this present day", "今天 | 正在度过的这一天", "오늘 | 지금 지나가고 있는 이날", "現在進行中のこの日。本日。"], ["明日", "あした", "N", "tomorrow | the day after today", "明天 | 今天的下一天", "내일 | 오늘의 바로 다음 날", "今日の次の日。翌日。"], ["昨日", "きのう", "N", "yesterday | the day before today", "昨天 | 今天的前一天", "어제 | 오늘의 바로 전날", "今日の前の日。前日。"], ["朝", "あさ", "N", "morning | early part of the day", "早晨 | 一天中太阳升起后的时段", "아침 | 해가 뜬 후부터 낮 전까지의 시간", "夜が明けてから昼前までの時間帯。"], ["夜", "よる", "N", "night | period of darkness between sunset and sunrise", "夜晚 | 日落到日出之间的黑暗时段", "밤 | 해가 진 뒤부터 다음 날 해가 뜨기 전까지의 어두운 시간", "日が沈んでから再び昇るまでの暗い時間帯。"], ["食事", "しょくじ", "N", "meal | food eaten on regular occasions", "饮食 | 每日定时摄取食物的行为", "식사 | 끼니로 음식을 먹는 일", "生命維持や栄養摂取のために食べ物をとること。"], ["水", "みず", "N", "water | clear liquid essential for life", "水 | 生命不可或缺的无色透明液体", "물 | 생명을 유지하는 데 필수적인 투명한 액체", "水素と酸素からなる無色透明の液体。"], ["お茶", "おちゃ", "N", "tea | aromatic beverage brewed from leaves", "茶 | 用茶叶冲泡的饮品", "차 | 찻잎을 우려낸 음료", "茶の葉を煎じたり抽出したりして飲む飲料。"], ["寿司", "すし", "N", "sushi | vinegared rice topped with seafood", "寿司 | 醋饭搭配海鲜等食材的日本料理", "초밥 | 식초로 간을 한 밥에 생선회 등을 얹은 일본 요리", "酢飯に魚介類などを合わせた代表的な日本料理。"], ["睡眠", "すいみん", "N", "sleep | natural periodic state of rest", "睡眠 | 身心休息的自然生理状态", "수면 | 눈을 감고 의식 활동을 쉬는 자연스러운 휴식 상태", "心身の疲労を回復させるために眠ること。"], ["健康", "けんこう", "N", "health | state of physical and mental well-being", "健康 | 身体与心理的良好状态", "건강 | 정신적·육체적으로 탈이 없고 튼튼한 상태", "病気や怪我がなく心身ともに健やかな状態。"], ["運動", "うんどう", "N", "exercise | physical activity for fitness", "运动 | 锻炼身体的体力活动", "운동 | 건강을 위해 몸을 움직이는 활동", "体力づくりや健康維持のために体を動かすこと。"], ["音楽", "おんがく", "N", "music | art of arranging sounds in time", "音乐 | 通过声音表达情感的艺术", "음악 | 소리를 소재로 하여 박자·가락·화성 등으로 표현하는 예술", "音やリズムを組み合わせて表現する芸術。"], ["読書", "どくしょ", "N", "reading | activity of reading books", "阅读 | 观看并理解书籍内容", "독서 | 책을 읽는 일", "本を読んで知識や教養を得たり楽しんだりすること。"], ["旅行", "りょこう", "N", "travel | journey to distant places", "旅行 | 前往异地游览或办事的行程", "여행 | 일이나 유람을 목적으로 다른 고장이나 외국에 가는 일", "住んでいる土地を離れて他の地域へ行くこと。"], ["空", "そら", "N", "sky | expanse of atmosphere above the earth", "天空 | 地面上方广阔的大气空间", "하늘 | 땅 위에 펼쳐진 넓은 공간", "地上から見上げた時に広がる大気の空間。"], ["太陽", "たいよう", "N", "sun | star at the center of our solar system", "太阳 | 太阳系中心的恒星", "태양 | 태양계의 중심에 있는 항성", "地球に光と熱をもたらす太陽系唯一の恒星。"], ["月", "つき", "N", "moon | Earth's natural satellite", "月亮 | 地球唯一的天然卫星", "달 | 지구의 유일한 자연 위성", "地球の周囲を公転する唯一の自然衛星。"], ["星", "ほし", "N", "star | luminous celestial body in the night sky", "星星 | 夜空中发光的天体", "별 | 밤하늘에 빛나는 천체", "夜空に輝いて見える天体の総称。"], ["雨", "あめ", "N", "rain | water droplets falling from clouds", "雨 | 从云层降落的水滴", "비 | 구름에서 떨어지는 물방울", "大気中の水蒸気が凝結して空から降ってくる水滴。"], ["雪", "ゆき", "N", "snow | frozen crystalline precipitation", "雪 | 冰晶状的固态降水", "눈 | 대기 중의 수증기가 얼어 땅 위로 떨어지는 얼음 결정", "大気中の水蒸気が氷の結晶となって降ってくる現象。"], ["風", "かぜ", "N", "wind | natural horizontal movement of air", "风 | 空气的自然流动", "바람 | 기압 차이로 일어나는 공기의 움직임", "気圧の差によって生じる大気の水平方向の流れ。"], ["山", "やま", "N", "mountain | large natural elevation of earth", "山 | 高出地面的自然隆起地形", "산 | 평지보다 높이 솟아 있는 지형", "周囲の平地よりも高く盛り上がった地形。"], ["川", "かわ", "N", "river | large natural stream of water", "河流 | 沿陆地表面流动的天然水道", "강 | 빗물이나 샘물이 모여 낮은 곳으로 흐르는 큰 물줄기", "陸地を流れて海や湖に注ぐ大きな水の流れ。"], ["森", "もり", "N", "forest | dense growth of trees", "森林 | 树木密集生长的大片林地", "숲 | 나무가 빽빽하게 들어선 곳", "多くの樹木が密集して生えている場所。"], ["花", "はな", "N", "flower | reproductive blossom of a plant", "花 | 植物的繁殖器官，常具色彩与香气", "꽃 | 식물의 생식 기관으로 아름다운 색과 향기를 지님", "種子植物の生殖器官で色や形が美しい部分。"], ["木漏れ日", "こもれび", "N", "sunlight filtering through trees", "树叶缝隙洒下的阳光", "나뭇잎 사이로 비치는 햇빛", "森林などの木々の葉の間から差し込む太陽の光。"], ["虹", "にじ", "N", "rainbow | colorful arc in the sky after rain", "彩虹 | 雨后天空中出现的七彩光弧", "무지개 | 비 온 뒤 하늘에 나타나는 일곱 빛깔의 띠", "空気中の水滴に太陽光が反射・屈折して現れる七色の光の弧。"], ["季節", "きせつ", "N", "season | division of the year marked by weather", "季节 | 一年中按气候划分的时期", "계절 | 한 해를 기후의 변화에 따라 나눈 철", "気候の推移によって一年を春・夏・秋・冬に分けた区分。"], ["春", "はる", "N", "spring | season of warming and blooming", "春天 | 万物复苏、气候转暖的季节", "봄 | 겨울과 여름 사이의 따뜻한 계절", "冬の終わりから夏の始まりまでの暖かい季節。"], ["夏", "なつ", "N", "summer | warmest season of the year", "夏天 | 一年中最炎热的季节", "여름 | 일 년 중 가장 더운 계절", "四季の中で最も気温が高く日照時間が長い季節。"], ["秋", "あき", "N", "autumn | season of harvest and falling leaves", "秋天 | 收获与落叶的凉爽季节", "가을 | 더위가 물러가고 단풍이 드는 선선한 계절", "暑さが和らぎ紅葉や収穫の時期を迎える季節。"], ["冬", "ふゆ", "N", "winter | coldest season of the year", "冬天 | 一年中最寒冷的季节", "겨울 | 일 년 중 가장 추운 계절", "四季の中で最も気温が低く雪や霜が見られる季節。"], ["努力", "どりょく", "N", "effort | determined attempt to achieve a goal", "努力 | 为实现目标而付出心力", "노력 | 목적을 이루기 위해 몸과 마음을 다해 애씀", "目標の実現のために力を尽くして励むこと。"], ["挑戦", "ちょうせん", "N", "challenge | task testing one's abilities", "挑战 | 勇敢面对困难或新事物", "도전 | 어려운 일이나 새로운 기록에 맞서 싸움", "困難な事柄や新しい記録などに立ち向かうこと。"], ["成功", "せいこう", "N", "success | accomplishment of an aim or purpose", "成功 | 达到预期的目标", "성공 | 목적하는 바를 이룸", "目的としていた事柄を成し遂げること。"], ["失敗", "しっぱい", "N", "failure | lack of success", "失败 | 没有达到预期的结果", "실패 | 일을 잘못하여 뜻한 대로 되지 않음", "物事をやり損なうこと。望んだ結果が得られないこと。"], ["経験", "けいけん", "N", "experience | practical contact with events", "经验 | 亲身经历并获得的知识与技能", "경험 | 실제로 해 보거나 겪어 봄", "実際に見たり聞いたり行ったりして得た知識や技能。"], ["知識", "ちしき", "N", "knowledge | facts and understanding acquired", "知识 | 通过学习与实践获得的认识", "지식 | 배우거나 실천을 통해 알게 된 명확한 인식", "学習や経験によって得られた物事に関する理解や情報。"], ["学習", "がくしゅう", "N", "learning | acquisition of knowledge or skills", "学习 | 获取知识与技能的过程", "학습 | 배워서 익힘", "知識や技術を学び身につけること。"], ["研究", "けんきゅう", "N", "research | systematic investigation to discover facts", "研究 | 深入探究事物规律的活动", "연구 | 어떤 일이나 사물에 대하여 깊이 있게 조사하고 생각함", "物事の真理や法則を深く調べて明らかにすること。"], ["計画", "けいかく", "N", "plan | detailed proposal for doing something", "计划 | 行动前预先制定的方案", "계획 | 앞으로 할 일의 절차나 방법을 미리 정함", "物事を行うにあたってあらかじめ立てる方法や手順。"], ["信頼", "しんらい", "N", "trust | firm belief in reliability and honesty", "信任 | 相信并敢于托付", "신뢰 | 굳게 믿고 의지함", "相手を信じて頼りにすること。"], ["協力", "きょうりょく", "N", "cooperation | working together toward a goal", "合作 | 共同出力完成某事", "협력 | 힘을 합하여 서로 도움", "共通の目的のために力を合わせること。"], ["改善", "かいぜん", "N", "improvement | making something better", "改善 | 改变原有情况使之变好", "개선 | 잘못된 것이나 부족한 것을 고쳐 더 좋게 만듦", "悪いところを改めて良くすること。"], ["革新", "かくしん", "N", "innovation | introducing new ideas or methods", "革新 | 破除旧习、创造新事物", "혁신 | 묵은 풍속·관습·조직·방법 따위를 완전히 바꾸어서 새롭게 함", "従来の制度や方法などを改めて新しくすること。"], ["創造", "そうぞう", "N", "creation | bringing something new into existence", "创造 | 想出新方法或做出新事物", "창조 | 전에 없던 것을 처음으로 만들어 냄", "新しいものを初めて作り出すこと。"], ["効率", "こうりつ", "N", "efficiency | achieving maximum output with minimum waste", "效率 | 单位时间内完成的工作量与效益", "효율 | 들인 노력에 대하여 얻는 결과의 비율", "使った労力や時間に対して得られる成果の割合。"], ["品質", "ひんしつ", "N", "quality | standard of excellence of something", "质量 | 产品或工作的优劣程度", "품질 | 물건의 바탕과 성질", "品物やサービスの優劣や出来栄えの度合い。"], ["会議", "かいぎ", "N", "meeting | gathering of people for discussion", "会议 | 聚集在一起商议事情的活动", "회의 | 여럿이 모여 의논함", "関係者が集まって相談や議論をすること。"], ["報告", "ほうこく", "N", "report | account given of a matter investigated", "报告 | 把事情或意见正式告诉上级或群众", "보고 | 일의 내용이나 결과를 말이나 글로 알림", "調査や業務の経過・結果を知らせること。"], ["目標", "もくひょう", "N", "goal | desired result a person aims to achieve", "目标 | 想要达到的境地或标准", "목표 | 도달하고자 하는 지점이나 수준", "行動を進めるにあたって目指す的や水準。"], ["温故知新", "おんこちしん", "X", "learning new things by studying the past", "温故知新 | 温习旧知识从而获得新理解", "온고지신 | 옛것을 익히고 그것을 미루어 새것을 앎", "昔の事柄を研究し、そこから新しい知識や道理を見出すこと。"], ["切磋琢磨", "せっさたくま", "X", "mutual encouragement and friendly competition", "切磋琢磨 | 互相学习讨论以共同进步", "절차탁마 | 학문이나 덕행을 서로 갈고닦음", "仲間同士で互いに励まし合い、競い合って向上すること。"], ["試行錯誤", "しこうさくご", "X", "trial and error | testing methods until succeeding", "试错 | 不断尝试并从错误中寻找正确方法", "시행착오 | 여러 번 시도하고 실패하면서 해결책을 찾아감", "試みと失敗を繰り返しながら解決策を探ること。"], ["希望", "きぼう", "N", "hope | feeling of expectation and desire", "希望 | 心里想着达到某种目的或出现某种情况", "희망 | 어떤 일을 이루거나 하기를 바람", "将来に対して明るい期待を抱くこと。"], ["勇気", "ゆうき", "N", "courage | ability to confront fear or danger", "勇气 | 敢作敢为毫不畏惧的气魄", "용기 | 씩씩하고 굳센 기운 또는 겁내지 않는 마음", "困難や危険を恐れずに立ち向かう強い心。"], ["友情", "ゆうじょう", "N", "friendship | bond of mutual affection between friends", "友情 | 朋友之间的深厚情谊", "우정 | 친구 사이의 정", "友達同士の間に通い合う温かい気持ち。"], ["愛情", "あいじょう", "N", "affection | gentle feeling of fondness or love", "爱情 | 深深的爱恋与关怀之情", "애정 | 사랑하는 마음", "相手を深く愛し大切にする気持ち。"], ["幸福", "こうふく", "N", "happiness | state of well-being and contentment", "幸福 | 称心如意、快乐美好的境遇", "행복 | 생활에서 충분한 만족과 기쁨을 느끼어 흐뭇함", "心が満たされ満ち足りている状態。幸せ。"], ["安心", "あんしん", "N", "relief | feeling of reassurance and freedom from worry", "安心 | 心情安定没有忧虑", "안심 | 걱정이 없어 마음이 편함", "気掛かりなことがなく心が落ち着いていること。"], ["緊張", "きんちょう", "N", "tension | mental or emotional strain", "紧张 | 精神处于高度准备或不安状态", "긴장 | 마음을 졸이고 정신을 바짝 차림", "心や体が引き締まり張り詰めること。"], ["好奇心", "こうきしん", "N", "curiosity | strong desire to know or learn", "好奇心 | 对新奇事物探究的兴趣", "호기심 | 새롭고 신기한 것을 좋아하거나 모르는 것을 알고 싶어 하는 마음", "珍しいものや未知の事柄に対して興味を抱く心。"], ["情熱", "じょうねつ", "N", "passion | strong and barely controllable enthusiasm", "热情 | 热烈而激昂的情感与干劲", "열정 | 어떤 일에 열렬한 애정을 가지고 열중하는 마음", "ある物事に向かって激しく燃え立つ気持ち。"], ["謙虚", "けんきょ", "NA", "humble | modest and respectful toward others", "谦虚 | 虚心不自满", "겸허 | 자신을 낮추고 남을 존중하는 태도", "控え目でつつましく、素直に人の意見を受け入れる様子。"], ["食べる", "たべる", "V", "eat | consume food", "吃 | 把食物放入口中咀嚼并咽下", "먹다 | 음식을 입에 넣어 씹어 삼키다", "栄養をとるために食物を口に入れて噛み飲み込む。"], ["飲む", "のむ", "V", "drink | swallow liquid", "喝 | 把液体咽下去", "마시다 | 액체를 목구멍으로 넘기다", "水や飲料などの液体を口から体内に取り込む。"], ["見る", "みる", "V", "see | perceive with the eyes", "看 | 用眼睛观察事物", "보다 | 눈으로 대상의 존재나 형태를 알다", "目の働きによって物の形や色をとらえる。"], ["聞く", "きく", "V", "listen | perceive sound or ask", "听 | 用耳朵接收声音", "듣다 | 소리를 귀로 느끼다", "耳で音や声を感じ取る。また尋ねる。"], ["話す", "はなす", "V", "speak | say words to communicate", "说 | 用语言表达意思", "말하다 | 생각이나 느낌을 말로 나타내다", "言葉に出して考えや気持ちを伝える。"], ["書く", "かく", "V", "write | mark letters or words on a surface", "写 | 用笔在纸上记录文字", "쓰다 | 종이 등에 글자를 적다", "文字や文章を記す。"], ["読む", "よむ", "V", "read | look at and comprehend written words", "读 | 看着文字念出或理解", "읽다 | 글을 보고 뜻을 이해하다", "書かれた文字を見てその内容を理解する。"], ["行く", "いく", "V", "go | move from one place to another", "去 | 从所在地向目的地点移动", "가다 | 한 곳에서 다른 곳으로 이동하다", "目的地に向かって移動する。"], ["来る", "くる", "V", "come | move toward the speaker", "来 | 从别处向说话人所在处移动", "오다 | 다른 곳에서 이쪽으로 이동하다", "こちらに向かって近づいてくる。"], ["泳ぐ", "およぐ", "V", "swim | propel the body through water", "游泳 | 人或动物在水中游动", "헤엄치다 | 물속에서 팔다리를 움직여 나아가다", "手足やひれを動かして水中を進む。"], ["走る", "はしる", "V", "run | move at a speed faster than a walk", "跑 | 快速迈步前进", "달리다 | 빠른 속도로 뛰어가다", "両足を素早く動かして地上を進む。"], ["考える", "かんがえる", "V", "think | direct one's mind toward something", "思考 | 进行分析、推理和判断", "생각하다 | 머리를 써서 사물을 헤아리고 판단하다", "頭を働かせて物事を筋道立てて判断する。"], ["学ぶ", "まなぶ", "V", "learn | gain knowledge or skill by study", "学习 | 效仿并掌握知识技能", "배우다 | 새로운 지식이나 기술을 익히다", "教えを受けたり経験したりして知識や技術を身につける。"], ["作る", "つくる", "V", "make | form by putting parts together", "制作 | 制造或创造出物品", "만들다 | 재료를 가공하여 새로운 것을 이루다", "材料や工夫を用いて新しいものを作り上げる。"], ["探す", "さがす", "V", "search | try to find something", "寻找 | 觅求未知或丢失的事物", "찾다 | 보이지 않는 것을 알아내려고 살피다", "欲しいものや見当たらないものを見つけようとする。"], ["大きい", "おおきい", "A", "big | of considerable size or extent", "大 | 体积、面积或数量超过一般", "크다 | 사물의 넓이·부피·규모 등이 보통을 넘다", "形や規模・数量などが並外れている様子。"], ["小さい", "ちいさい", "A", "small | of limited size", "小 | 体积、面积或数量低于一般", "작다 | 길이·넓이·부피 등이 보통보다 덜하다", "形や規模・数量などがわずかである様子。"], ["新しい", "あたらしい", "A", "new | recently made or discovered", "新 | 刚出现或刚制造出来的", "새롭다 | 지금까지 없던 것이 처음 생기다", "今までになかった状態である。フレッシュな様子。"], ["古い", "ふるい", "A", "old | having existed for a long time", "旧 | 存在时间很久的", "오래되다 | 시간이 많이 지나 낡다", "長い年月が経過している様子。"], ["速い", "はやい", "A", "fast | moving or capable of moving at high speed", "快 | 速度高、用时短", "빠르다 | 움직이는 속도가 높다", "動作や移動の速度が高い様子。"], ["美しい", "うつくしい", "A", "beautiful | pleasing the senses or mind aesthetically", "美丽 | 使人感到愉悦的好看", "아름답다 | 보기에 훌륭하고 감동적이다", "色や形・心などが整っていて感動を与える様子。"], ["強い", "つよい", "A", "strong | having great power or strength", "强 | 力量大、能力高", "강하다 | 힘이나 세력이 크다", "力や勢いが大きく簡単には負けない様子。"], ["優しい", "やさしい", "A", "kind | friendly, generous, and considerate", "温柔 | 温和体贴、善解人意", "상냥하다 | 마음이 따뜻하고 친절하다", "思いやりがあり穏やかで親切な様子。"], ["楽しい", "たのしい", "A", "fun | providing enjoyment and amusement", "快乐 | 感到高兴和满足", "즐겁다 | 마음에 거슬림이 없이 흐뭇하고 기쁘다", "心が浮き立ち喜ばしい気持ちになる様子。"], ["難しい", "むずかしい", "A", "difficult | needing much effort or skill to accomplish", "难 | 不容易做到或理解", "어렵다 | 하기 힘들거나 까다롭다", "理解や実現に多くの労力や工夫を要する様子。"], ["数学", "すうがく", "N", "mathematics | abstract science of number and space", "数学 | 研究数量、结构与空间的学科", "수학 | 수량 및 공간의 성질을 연구하는 학문", "数や図形・論理的構造を研究する学問。"], ["科学", "かがく", "N", "science | systematic study of the physical world", "科学 | 探索自然与社会规律的知识体系", "과학 | 보편적 진리나 법칙의 발견을 목적으로 한 체계적 지식", "観察や実験に基づいて自然界の法則を解明する学問。"], ["宇宙", "うちゅう", "N", "universe | all existing matter and space as a whole", "宇宙 | 一切空间与时间的总和", "우주 | 모든 천체와 공간을 아우르는 무한한 세계", "すべての天体や物質・空間を含む無限の広がり。"], ["地球", "ちきゅう", "N", "Earth | the planet on which we live", "地球 | 人类居住的太阳系第三颗行星", "지구 | 인류가 살고 있는 태양계의 세 번째 행성", "太陽系の第3惑星で豊かな海と生命を持つ星。"], ["重力", "じゅうりょく", "N", "gravity | force attracting objects toward a mass", "重力 | 地球或天体对物体的吸引力", "중력 | 지구가 물체를 끌어당기는 힘", "地球などの天体が物体をその中心に向かって引き寄せる力。"], ["エネルギー", "えねるぎー", "N", "energy | capacity for doing work", "能量 | 物质做功的能力", "에너지 | 일을 할 수 있는 능력", "物体が他の物体に対して仕事をする能力。"], ["確率", "かくりつ", "N", "probability | likelihood of an event occurring", "概率 | 某事件发生可能性的大小", "확률 | 어떤 사건이 일어날 가능성의 정도", "ある事象が起こる確実さの度合いを数値で表したもの。"], ["論理", "ろんり", "N", "logic | reasoning conducted according to strict principles", "逻辑 | 思维的规律和推理规则", "논리 | 말이나 글에서 사고나 추리 따위를 이치에 맞게 이끌어 가는 과정", "思考や議論を進める際の筋道や法則。"], ["実験", "じっけん", "N", "experiment | scientific procedure to test a hypothesis", "实验 | 为检验理论或假设而进行的操作", "실험 | 가설이나 이론을 검증하기 위해 실제로 해 보는 일", "仮説の正しさを確かめるために条件を整えて試すこと。"], ["発見", "はっけん", "N", "discovery | finding something previously unknown", "发现 | 经过探索看到或找到前人未知的事物", "발견 | 아직 알려지지 않은 사물이나 현상을 찾아냄", "それまで知られていなかった事実や法則を見つけ出すこと。"], ["言語", "げんご", "N", "language | system of human communication", "语言 | 人类交流思想的工具", "언어 | 생각이나 느낌을 전달하는 음성·문자 체계", "人間が意思や感情を伝達するために用いる音声や文字の体系。"], ["翻訳", "ほんやく", "N", "translation | converting text from one language to another", "翻译 | 把一种语言文字转换成另一种语言", "번역 | 어떤 언어로 된 글을 다른 언어의 글로 옮김", "ある言語で表現された文章を別の言語に置き換えること。"], ["辞書", "じしょ", "N", "dictionary | reference book listing words and meanings", "词典 | 收集词汇并解释其意义的参考书", "사전 | 낱말을 모아 일정한 순서로 배열하고 뜻을 풀이한 책", "言葉を集めて配列し、読み方や意味・用法を解説した書物。"], ["文化", "ぶんか", "N", "culture | customs, arts, and achievements of a group", "文化 | 人类社会创造的物质与精神财富", "문화 | 인류가 사회를 이루며 만들어 낸 정신적·물질적 산물", "社会の中で共有され受け継がれていく生活様式や芸術・思想。"], ["歴史", "れきし", "N", "history | study of past events", "历史 | 人类社会过去的发展过程", "역사 | 인류 사회의 변천과 흥망의 과정", "人類や社会の過去の出来事とその変遷の記録。"], ["平和", "へいわ", "N", "peace | freedom from war and violence", "和平 | 没有战争与冲突的安宁状态", "평화 | 전쟁이나 갈등 없이 평온함", "戦争や争いがなく世の中が穏やかに治まっている状態。"], ["自由", "じゆう", "N", "freedom | power or right to act or speak freely", "自由 | 不受拘束、自主支配的权利", "자유 | 외부의 구속을 받지 않고 자기 마음대로 할 수 있는 상태", "他からの強制や束縛を受けず自分の意思で行動できること。"], ["未来", "みらい", "N", "future | time yet to come", "未来 | 现在以后的时间", "미래 | 앞으로 올 시간", "これからやって来る先の時代や時間。"], ["世界", "せかい", "N", "world | the earth together with all its countries", "世界 | 地球上所有国家与地区", "세계 | 지구상의 모든 나라와 인류 사회", "地球上のすべての国や地域、あるいは人間社会全体。"], ["日本", "にほん", "N", "Japan | island country in East Asia", "日本 | 位于东亚的岛国", "일본 | 동아시아에 위치한 섬나라", "東アジアに位置する四方を海に囲まれた島国。"], ["英語", "えいご", "N", "English | global West Germanic language", "英语 | 国际广泛使用的语言", "영어 | 국제적으로 널리 쓰이는 언어", "イギリス発祥で世界中で広く使われている国際言語。"], ["中国語", "ちゅうごくご", "N", "Chinese | Sinitic language family", "汉语 | 中国的通用语言", "중국어 | 중국에서 주로 사용하는 언어", "中国を中心に話されるシナ・チベット語族の言語。"], ["韓国語", "かんこくご", "N", "Korean | language of the Korean Peninsula", "韩语 | 朝鲜半岛的通用语言", "한국어 | 한반도에서 사용하는 언어", "朝鮮半島を中心に話されハングルで表記される言語。"],
+ ["カタカナ", "かたかな", "N", "Katakana | Japanese syllabary for loanwords and emphasis", "片假名 | 日语中用于外来语和拟声词的表音文字", "가타카나 | 외래어나 강조 표기에 쓰이는 일본어 음절 문자", "主に外来語・擬音語・強調表現などに用いられる日本の表音文字。"],
+ ["ひらがな", "ひらがな", "N", "Hiragana | basic Japanese phonetic script", "平假名 | 日语的基础表音文字", "히라가나 | 일본어의 기본 표음 문자", "和語の表記や送り仮名に用いられる曲線的な日本の表音文字。"],
+ ["絵文字", "えもじ", "N", "emoji | pictorial symbol used in digital text", "绘文字 | 用于数字文本中的图形符号", "이모지 | 디지털 텍스트에서 감정을 표현하는 그림 문자", "感情やモノ・記号を視覚的に表すデジタル上の図形文字（例: 🦈🌊🔥）。"],
+ ["サメ", "さめ", "N", "shark | apex ocean predator", "鲨鱼 | 海洋顶级掠食者", "상어 | 바다의 최상위 포식자", "鋭い歯と優れた感覚器官を持つ海のハンター。"]];
+
+ const POS_TEXT = {
+ N: { ja: '名詞', en: 'Noun', ko: '명사', zh: '名词' },
+ V: { ja: '動詞', en: 'Verb', ko: '동사', zh: '动词' },
+ A: { ja: '形容詞', en: 'Adjective', ko: '형용사', zh: '形容词' },
+ NA: { ja: '形容動詞', en: 'Na-adjective', ko: '형용사', zh: '形容动词' },
+ AD: { ja: '副詞', en: 'Adverb', ko: '부사', zh: '副词' },
+ X: { ja: '慣用句・四字熟語', en: 'Idiom', ko: '관용구·사자성어', zh: '惯用语·成语' }
+ };
+
+ function makeMultiDictItem([term, kana, pos, en, zh, ko, mean]) {
+ const [enHead, enDef] = en.split('|').map(s => s.trim());
+ const [zhHead, zhDef] = zh.split('|').map(s => s.trim());
+ const [koHead, koDef] = ko.split('|').map(s => s.trim());
+ const title = !kana || term === kana ? term : `${term}（${kana}）`;
+ const heads = { ja: title, en: enHead, zh: zhHead, ko: koHead };
+ const defs = { ja: mean, en: enDef, zh: zhDef, ko: koDef };
+ const banner = {
+ ja: `🦈 4言語ソナー捕捉！【${title}】`,
+ en: `🦈 4-LANG SONAR CONTACT!【${enHead}】`,
+ ko: `🦈 4개국어 소나 접촉!【${koHead}】`,
+ zh: `🦈 四语声纳捕捉！【${zhHead}】`
+ };
+ const response = {};
+ for (const lang of LANGS) {
+ const order = [lang, ...LANGS.filter(l => l !== lang)];
+ const lines = [banner[lang], `品詞 / POS: ${(POS_TEXT[pos] || POS_TEXT.N)[lang]}`];
+ for (const l of order) {
+ const def = defs[l] || '';
+ lines.push(`[${l.toUpperCase()}] ${heads[l]}${def ? ` — ${def}` : ''}`);
+ }
+ response[lang] = lines.join('\n');
+ }
+ return {
+ term,
+ kana,
+ pos,
+ keywords: {
+ ja: [term, kana].filter(Boolean),
+ en: [enHead.toLowerCase()],
+ ko: [koHead],
+ zh: [zhHead]
+ },
+ exact: [term, kana, enHead.toLowerCase(), zhHead, koHead].filter(Boolean),
+ tag: '4LANG_DICTIONARY_CATCH',
+ response
+ };
+ }
+
+ const DICT_KNOWLEDGE = MULTI_VOCAB_RAW.map(makeMultiDictItem);
+
+ const CORE_KNOWLEDGE = [
+ {
+ keywords: {
+ ja: ['自己紹介', '誰', 'お前', 'v4', '進化'],
+ en: ['who are you', 'your name', 'introduce', 'about you', 'v4'],
+ ko: ['자기소개', '정체', '누구', 'v4'],
+ zh: ['你是谁', '自我介绍', '介绍', 'v4']
+ },
+ response: {
+ ja: 'オレは「アクア・アクーラ v4」！深海から覚醒した次世代サイバー・プレデターだ。外部APIゼロの完全ローカル環境で、文脈・相棒の名前記憶、ファジー曖昧辞書検索、関数計算、そしてproモードの深層分析までブラウザ単体で叩き出すぜ！',
+ en: "I'm AQUA AKULA v4 — the next-gen cyber predator from the azure deep. With zero external APIs, I run context & user-name memory, fuzzy 4-language dictionary search, expression math, and Pro Mode deep analysis right in your browser!",
+ ko: '나는 「아쿠아 아쿨라 v4」! 심해에서 각성한 차세대 사이버 프레데터다. 외부 API 제로의 완전 로컬 환경에서 문맥·이름 기억, 퍼지 4개국어 사전, 수식 계산, pro 모드 심층 분석까지 브라우저 단독으로 실행한다!',
+ zh: '我是「AQUA AKULA v4」！从深海觉醒的新一代赛博掠食者。零外部 API，在本地运行上下文与姓名记忆、模糊四语词典、函数计算以及 pro 模式深度分析！'
+ }
+ },
+ {
+ keywords: {
+ ja: ['運勢', '占い', 'おみくじ'],
+ en: ['fortune', 'horoscope', 'luck'],
+ ko: ['운세', '사주', '점치'],
+ zh: ['运势', '占卜', '算命']
+ },
+ type: 'fortune'
+ },
+ {
+ keywords: {
+ ja: ['辞書検索', '辞書で調べ', '意味を調べ'],
+ en: ['dictionary search', 'look up', 'dictionary'],
+ ko: ['사전 검색', '단어 검색'],
+ zh: ['词典查询', '查词典', '查单词']
+ },
+ response: {
+ ja: `🔍 v4辞書検索モード起動！\n現在【${DICT_KNOWLEDGE.length}語】の4言語データを収録中。次に入力した言葉を完全一致＋ファジー曖昧ソナーで日・英・中・韓すべてから横断検索するぜ！`,
+ en: `🔍 v4 Dictionary mode engaged!\nSearching across ${DICT_KNOWLEDGE.length} 4-language entries with exact & fuzzy matching. Type any word next!`,
+ ko: `🔍 v4 사전 검색 모드 기동!\n현재 ${DICT_KNOWLEDGE.length}개의 4개국어 단어를 완전 일치 + 퍼지 유사도 소나로 검색한다!`,
+ zh: `🔍 v4 词典查询模式启动！\n当前收录 ${DICT_KNOWLEDGE.length} 条四语词汇，支持精确+模糊匹配。请输入要查询的词语！`
+ }
+ },
+ {
+ keywords: {
+ ja: ['何時', '日付', '今日の日付', '何曜日'],
+ en: ['what time', 'current time', 'today date', 'what day'],
+ ko: ['몇 시', '현재 시간', '오늘 날짜'],
+ zh: ['几点', '现在时间', '今天日期']
+ },
+ type: 'datetime'
+ }
+ ];
+
+ const FORTUNES = {
+ ja: [
+ '【超大吉（メガロドン級）】🦈🔥\n今日のオマエは無敵だ！狙った獲物は絶対に逃さねぇ！',
+ '【大吉（ホホジロザメ級）】🦈✨\n鋭い直感が冴え渡る日！迷ったら攻めの姿勢で突き進め！',
+ '【中吉（シュモクザメ級）】👀🌊\n視野を広く持つと幸運をキャッチできるぜ！'
+ ],
+ en: [
+ '【Mega Lucky (Megalodon class)】🦈🔥\nYou are unstoppable today!',
+ '【Great Luck (Great White class)】🦈✨\nYour instincts are razor-sharp today!'
+ ],
+ ko: [
+ '【초대길 (메갈로돈급)】🦈🔥\n오늘의 넌 무적이다!',
+ '【대길 (백상아리급)】🦈✨\n날카로운 직감이 빛나는 날!'
+ ],
+ zh: [
+ '【超大吉（巨齿鲨级）】🦈🔥\n今天的你无人能敌！',
+ '【大吉（大白鲨级）】🦈✨\n直觉锐利的一天！'
+ ]
+ };
+
+ const FALLBACKS = {
+ ja: [
+ 'ふむ…そのフレーズは深海ソナーの会話メモリにはまだ無いな！\n単語の意味を知りたいなら「深海」「人工知能」「shark」「상어」のように単語を打つか、下の「調教」パネルでオレに新しい言葉を教えてくれ！'
+ ],
+ en: [
+ "Hmm... that's not in my chat memory yet! Try typing a vocabulary word in JA/EN/ZH/KO or teach me in the training panel below!"
+ ],
+ ko: [
+ '흠… 아직 대화 메모리에 없는 말이다! 4개국어 단어를 입력하거나 아래 조교 패널에서 가르쳐 줘!'
+ ],
+ zh: [
+ '唔…这句话还没录入对话记忆！可以输入中日英韩词汇查词典，或在下方训练面板教我！'
+ ]
+ };
+
+ // v4 State & Context Memory
+ let uiLang = 'ja';
+ let dictSearchArmed = false;
+ const chatHistoryLog = [];
+ const v4Context = {
+ userName: localStorage.getItem('aqua_akula_v4_username') || '',
+ lastTopic: '',
+ lastDictItem: null,
+ turnCount: 0
+ };
+
+ function updateContextStrip() {
+ const uEl = document.getElementById('contextUserStatus');
+ const tEl = document.getElementById('contextTopicStatus');
+ if (uEl) {
+ uEl.innerHTML = v4Context.userName
+ ? `👤 相棒: <strong>${escapeHtml(v4Context.userName)}</strong>`
+ : '👤 相棒: 未登録（「名前は〇〇」で記憶）';
+ }
+ if (tEl) {
+ tEl.innerHTML = v4Context.lastTopic
+ ? `🎯 直前の話題: <strong>${escapeHtml(v4Context.lastTopic)}</strong>`
+ : '🎯 直前の話題: なし';
+ }
+ }
+
+ function setDictArmed(on) {
+ dictSearchArmed = on;
+ const btn = document.getElementById('dictBtn');
+ if (!btn) return;
+ btn.classList.toggle('active', on);
+ btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+ btn.closest('.input-bar').classList.toggle('dict-mode', on);
+ }
+
+ function normalizeText(str) {
+ if (!str) return '';
+ return str.normalize('NFKC').trim();
+ }
+
+ function toHiragana(str) {
+ return normalizeText(str).replace(/[\u30a1-\u30f6]/g, ch =>
+ String.fromCharCode(ch.charCodeAt(0) - 0x60)
+ );
+ }
+
+ function toKatakana(str) {
+ return normalizeText(str).replace(/[\u3041-\u3096]/g, ch =>
+ String.fromCharCode(ch.charCodeAt(0) + 0x60)
+ );
+ }
+
+ function extractEmojis(str) {
+ try {
+ return str.match(/\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*/gu) || [];
+ } catch (e) {
+ return [];
+ }
+ }
+
+ function detectLang(text) {
+ const norm = normalizeText(text);
+ if (/[\u3040-\u30ff]/.test(norm)) return 'ja';
+ if (/[\uac00-\ud7af\u1100-\u11ff]/.test(norm)) return 'ko';
+ if (/[\u4e00-\u9faf]/.test(norm)) return uiLang === 'zh' ? 'zh' : 'ja';
+ if (/[a-z]/i.test(norm)) return 'en';
+ return uiLang;
+ }
+
+ // Levenshtein distance for v4 Fuzzy Dictionary Search
+ function levenshtein(a, b) {
+ if (a === b) return 0;
+ if (!a.length) return b.length;
+ if (!b.length) return a.length;
+ const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+ for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+ for (let i = 1; i <= a.length; i++) {
+ for (let j = 1; j <= b.length; j++) {
+ const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+ dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+ }
+ }
+ return dp[a.length][b.length];
+ }
+
+ function getLearnedKnowledge() {
+ try {
+ const stored = localStorage.getItem('aqua_akula_v3_memory');
+ return stored ? JSON.parse(stored) : [];
+ } catch (e) { return []; }
+ }
+
+ function saveLearnedKnowledge(list) {
+ try { localStorage.setItem('aqua_akula_v3_memory', JSON.stringify(list)); } catch (e) {}
+ renderLearnedTags();
+ }
+
+ function renderLearnedTags() {
+ const box = document.getElementById('learnedList');
+ if (!box) return;
+ const list = getLearnedKnowledge();
+ box.innerHTML = '';
+ list.forEach((item, idx) => {
+ const span = document.createElement('span');
+ span.className = 'learned-tag';
+ span.innerHTML = `<span>${escapeHtml(item.keyword)}</span><button type="button" title="削除">×</button>`;
+ span.querySelector('button').addEventListener('click', () => {
+ const updated = getLearnedKnowledge();
+ updated.splice(idx, 1);
+ saveLearnedKnowledge(updated);
+ });
+ box.appendChild(span);
+ });
+ }
+
+ // v4 Safe Expression & Scientific Calculator
+ function checkMath(input) {
+ let expr = input
+ .replace(/what\s+is|は？|は\?|っていくつ|等于几|얼마야|計算して/gi, ' ')
+ .replace(/[=＝?？]/g, ' ')
+ .replace(/×/g, '*').replace(/÷/g, '/').replace(/\^/g, '**')
+ .trim();
+
+ expr = expr.replace(/sqrt\(\s*(\d+(?:\.\d+)?)\s*\)/gi, (_, n) => String(Math.sqrt(parseFloat(n))));
+
+ if (!/^[0-9+\-*/().\s]+$/.test(expr)) return null;
+ if (!/[+\-*/]/.test(expr) && !input.toLowerCase().includes('sqrt')) return null;
+ if (/\/\s*0(?![.\d])/.test(expr)) {
+ return '0で割るんじゃねぇ！深海ブラックホールに吸い込まれるぞ！';
+ }
+ try {
+ const val = Function('"use strict"; return (' + expr + ')')();
+ if (typeof val !== 'number' || !Number.isFinite(val)) return null;
+ const rounded = parseFloat(val.toFixed(10));
+ return `⚡ v4数式ハント完了！\n${expr} = 【 ${rounded} 】だ！`;
+ } catch (e) {
+ return null;
+ }
+ }
+
+ function playJPS(input, lang) {
+ const hands = [
+ { id: 'rock', ja: 'グー', en: 'Rock', ko: '바위', zh: '石头' },
+ { id: 'scissors', ja: 'チョキ', en: 'Scissors', ko: '가위', zh: '剪刀' },
+ { id: 'paper', ja: 'パー', en: 'Paper', ko: '보', zh: '布' }
+ ];
+ let userHand = null;
+ if (/グー|rock|바위|石头/i.test(input)) userHand = hands[0];
+ else if (/チョキ|scissors|가위|剪刀/i.test(input)) userHand = hands[1];
+ else if (/パー|paper|보|布/i.test(input)) userHand = hands[2];
+ if (!userHand) return 'じゃんけん勝負だな！「グー」「チョキ」「パー」のどれかを出しな！';
+ const sharkHand = hands[Math.floor(Math.random() * 3)];
+ if (userHand.id === sharkHand.id) return `オマエ:【${userHand[lang]}】 vs アクーラ:【${sharkHand[lang]}】\nあいこだ！もう一回勝負だ！`;
+ const win = (userHand.id === 'rock' && sharkHand.id === 'scissors') ||
+ (userHand.id === 'scissors' && sharkHand.id === 'paper') ||
+ (userHand.id === 'paper' && sharkHand.id === 'rock');
+ return `オマエ:【${userHand[lang]}】 vs アクーラ:【${sharkHand[lang]}】\n${win ? 'チッ…オマエの勝ちだ！見事だ！' : 'ガハハ！オレの勝ちだ！'}`;
+ }
+
+ // v4 User Name & Context Handler
+ function checkContextIntent(normRaw, lang) {
+ const nameMatch = normRaw.match(/(?:オレの名前は|俺の名前は|私の名前は|僕の名前は|名前は|my name is|i am|i'm|내 이름은|我叫)\s*([^\s、。！!？?「」【】]+)(?:だ|です|だよ|です！|!|。)?$/i);
+ if (nameMatch && nameMatch[1] && !/何|なに|who|誰|だれ|什么|누구/i.test(nameMatch[1])) {
+ const newName = nameMatch[1].slice(0, 20);
+ v4Context.userName = newName;
+ try { localStorage.setItem('aqua_akula_v4_username', newName); } catch (e) {}
+ updateContextStrip();
+ return {
+ text: `ガハハ！覚えたぜ、相棒「${newName}」！\nこれからはオマエのことを【${newName}】と呼んでやるからな！🦈🔥`,
+ tag: 'V4_MEMORY_REGISTERED'
+ };
+ }
+
+ if (/オレの名前|俺の名前|私の名前|僕の名前|名前覚えて|my name|내 이름|我的名字/i.test(normRaw)) {
+ return {
+ text: v4Context.userName
+ ? `忘れっこねぇだろ！オマエはオレの相棒【${v4Context.userName}】だ！🦈✨`
+ : 'まだ相棒の名前を聞いてねぇな！「オレの名前は〇〇」って教えてくれ！',
+ tag: 'V4_CONTEXT_RECALL'
+ };
+ }
+
+ if (/さっきの|前の単語|もう一回|詳しく|例文|関連語|tell me more|more info/i.test(normRaw) && v4Context.lastDictItem) {
+ const item = v4Context.lastDictItem;
+ const related = DICT_KNOWLEDGE
+ .filter(d => d.term !== item.term && d.pos === item.pos)
+ .slice(0, 3)
+ .map(d => `${d.term} (${d.keywords.en[0]})`)
+ .join(' / ');
+ return {
+ text: `🎯 直前のターゲット【${item.term}】の追加ソナー解析だ！\n` +
+ `・品詞区分: ${(POS_TEXT[item.pos] || POS_TEXT.N)[lang]}\n` +
+ `・同品詞の関連語候補: ${related || 'なし'}\n\n` +
+ `${item.response[lang] || item.response.ja}`,
+ tag: 'V4_CONTEXT_FOLLOWUP'
+ };
+ }
+
+ return null;
+ }
+
+ // Cross-language search with v4 Fuzzy Matching
+ function searchDictionary(clean, rawText, lang, strict = false) {
+ const target = normalizeText(rawText).toLowerCase();
+ const targetHira = toHiragana(target);
+ const targetKata = toKatakana(target);
+ if (!target) return null;
+
+ const matchesVariant = (cand, query, queryHira, queryKata, allowReverse) => {
+ if (!cand) return null;
+ const cNorm = normalizeText(cand).toLowerCase();
+ const cHira = toHiragana(cNorm);
+ const cKata = toKatakana(cNorm);
+ if (cNorm === query || cHira === queryHira || cKata === queryKata) return 'exact';
+ if (query.includes(cNorm) || queryHira.includes(cHira) || queryKata.includes(cKata)) return 'partial';
+ if (allowReverse && (cNorm.includes(query) || cHira.includes(queryHira) || cKata.includes(queryKata))) return 'partial';
+ return null;
+ };
+
+ for (const item of DICT_KNOWLEDGE) {
+ for (const ex of item.exact) {
+ if (matchesVariant(ex, target, targetHira, targetKata, false) === 'exact') {
+ v4Context.lastDictItem = item;
+ v4Context.lastTopic = item.term;
+ updateContextStrip();
+ return { text: item.response[lang] || item.response.ja, tag: item.tag, item };
+ }
+ }
+ }
+
+ const hits = [];
+ for (const item of DICT_KNOWLEDGE) {
+ const allKws = [...item.keywords.ja, ...item.keywords.en, ...item.keywords.ko, ...item.keywords.zh];
+ if (allKws.some(kw => matchesVariant(kw, target, targetHira, targetKata, strict) !== null)) {
+ hits.push(item);
+ if (hits.length >= 3) break;
+ }
+ }
+ if (hits.length > 0) {
+ v4Context.lastDictItem = hits[0];
+ v4Context.lastTopic = hits[0].term;
+ updateContextStrip();
+ return {
+ text: hits.map(h => h.response[lang] || h.response.ja).join('\n\n---\n\n'),
+ tag: hits.length > 1 ? `4LANG_MULTI_HIT (${hits.length})` : '4LANG_DICTIONARY_CATCH',
+ item: hits[0]
+ };
+ }
+
+ if (target.length >= 3) {
+ let bestItem = null;
+ let bestDist = Infinity;
+ for (const item of DICT_KNOWLEDGE) {
+ for (const ex of item.exact) {
+ const c = normalizeText(ex).toLowerCase();
+ if (Math.abs(c.length - target.length) > 2) continue;
+ const d = levenshtein(target, c);
+ const maxAllowed = target.length >= 6 ? 2 : 1;
+ if (d <= maxAllowed && d < bestDist) {
+ bestDist = d;
+ bestItem = item;
+ }
+ }
+ }
+ if (bestItem) {
+ v4Context.lastDictItem = bestItem;
+ v4Context.lastTopic = bestItem.term;
+ updateContextStrip();
+ return {
+ text: `📡 ファジーソナー補正ヒット！（もしかして: 【${bestItem.term}】）\n\n` + (bestItem.response[lang] || bestItem.response.ja),
+ tag: 'V4_FUZZY_SONAR_CATCH',
+ item: bestItem
+ };
+ }
+ }
+
+ return null;
+ }
+
+ const EMOJI_MAP = {
+ '🦈': { ja: 'サメ（鮫）', en: 'Shark', ko: '상어', zh: '鲨鱼', reply: 'ガハハ！オレの仲間（サメ）の絵文字だな！深海ソナー全開だぜ！🦈⚡' },
+ '🌊': { ja: '波・海', en: 'Ocean Wave', ko: '파도·바다', zh: '海浪', reply: 'いい波が来てるぜ！深海クルージング日和だな！🌊🦈' },
+ '🔥': { ja: '炎・情熱', en: 'Fire', ko: '불꽃', zh: '火焰', reply: '熱いパッションを感じたぜ！全力で噛みついていこうぜ！🔥' },
+ '🍣': { ja: '寿司', en: 'Sushi', ko: '초밥', zh: '寿司', reply: 'うおっ、寿司だ！マグロもサーモンも丸呑みしてやるぜ！🍣' },
+ '🤖': { ja: 'ロボット・AI', en: 'Robot / AI', ko: '로봇·AI', zh: '机器人·AI', reply: 'サイバー深海AI v4の血が騒ぐぜ！ローカル推論エンジン稼働中だ！🤖' },
+ '🎉': { ja: 'お祝い', en: 'Party Popper', ko: '축하', zh: '庆祝', reply: 'お祝いムードだな！深海パーティの始まりだぜ！🎉🦈' },
+ '❤️': { ja: 'ハート・愛', en: 'Heart', ko: '하트', zh: '爱心', reply: 'サンキュー相棒！深海の絆は固いぜ！❤️🦈' },
+ '❤': { ja: 'ハート・愛', en: 'Heart', ko: '하트', zh: '爱心', reply: 'サンキュー相棒！深海の絆は固いぜ！❤️🦈' }
+ };
+
+ function decorateProMode(result, normRaw, lang) {
+ const mode = document.getElementById('modeSelect')?.value || 'fast';
+ if (mode !== 'pro') return result;
+
+ const relatedTerms = DICT_KNOWLEDGE
+ .filter(d => normRaw.includes(d.term) || (result.item && d.pos === result.item.pos && d.term !== result.item.term))
+ .slice(0, 3)
+ .map(d => `${d.term} [${d.keywords.en[0]}]`);
+
+ const proFooter = [
+ `\n━━━━━━━━━━━━━━━━━━`,
+ `🧠 [V4 PRO DEEP REASONING]`,
+ `• 検出言語 / Detected: ${lang.toUpperCase()} | 文字数: ${normRaw.length}`,
+ `• 記憶コンテキスト: 相棒=${v4Context.userName || '未登録'} / 話題=${v4Context.lastTopic || '一般会話'}`,
+ relatedTerms.length ? `• 関連ソナー語彙: ${relatedTerms.join(', ')}` : `• 推論ステータス: ローカル自律推論完了 (0ms API遅延)`
+ ].join('\n');
+
+ return {
+ ...result,
+ text: result.text + proFooter,
+ tag: `${result.tag} // PRO`
+ };
+ }
+
+ function personalizeReply(text) {
+ if (v4Context.userName && v4Context.turnCount % 3 === 1 && !text.includes(v4Context.userName)) {
+ return `${v4Context.userName}、${text}`;
+ }
+ return text;
+ }
+
+ function sharkThink(inputText, forceDict = false) {
+ v4Context.turnCount++;
+ const normRaw = normalizeText(inputText);
+ const clean = normRaw.toLowerCase();
+ const cleanHira = toHiragana(clean);
+ const lang = detectLang(clean);
+ const emojis = extractEmojis(normRaw);
+
+ if (forceDict) {
+ const dictHit = searchDictionary(clean, normRaw, lang, true);
+ if (dictHit) return decorateProMode(dictHit, normRaw, lang);
+ if (emojis.length > 0) {
+ const eInfo = emojis.map(e => EMOJI_MAP[e]
+ ? `${e} → [JA] ${EMOJI_MAP[e].ja} / [EN] ${EMOJI_MAP[e].en} / [ZH] ${EMOJI_MAP[e].zh} / [KO] ${EMOJI_MAP[e].ko}`
+ : `${e} → 絵文字シンボル (Unicode UTF-8)`);
+ return decorateProMode({ text: `🦈 絵文字ソナー捕捉！\n${eInfo.join('\n')}`, tag: 'EMOJI_DICTIONARY_CATCH' }, normRaw, lang);
+ }
+ return decorateProMode({
+ text: `🦈 ソナーに反応なし…「${normRaw}」は4言語辞書に見つからなかったぜ。`,
+ tag: 'DICTIONARY_MISS'
+ }, normRaw, lang);
+ }
+
+ const ctxRes = checkContextIntent(normRaw, lang);
+ if (ctxRes) return decorateProMode(ctxRes, normRaw, lang);
+
+ const mathAns = checkMath(clean);
+ if (mathAns) {
+ v4Context.lastTopic = '数式計算';
+ updateContextStrip();
+ return decorateProMode({ text: mathAns, tag: 'V4_CALC_HUNT' }, normRaw, lang);
+ }
+
+ if (/じゃんけん|ぐー|ちょき|ぱー|rock|paper|scissors|가위|바위|보|石头|剪刀|布/i.test(cleanHira)) {
+ v4Context.lastTopic = 'じゃんけん勝負';
+ updateContextStrip();
+ return decorateProMode({ text: playJPS(toKatakana(clean), lang), tag: 'JPS_BATTLE' }, normRaw, lang);
+ }
+
+ for (const item of getLearnedKnowledge()) {
+ const kwNorm = normalizeText(item.keyword).toLowerCase();
+ if (kwNorm && (clean.includes(kwNorm) || cleanHira.includes(toHiragana(kwNorm)))) {
+ v4Context.lastTopic = item.keyword;
+ updateContextStrip();
+ return decorateProMode({ text: personalizeReply(item.response), tag: 'USER_TRAINED_MEMORY' }, normRaw, lang);
+ }
+ }
+
+ for (const item of CORE_KNOWLEDGE) {
+ const kws = [...item.keywords.ja, ...item.keywords.en, ...item.keywords.ko, ...item.keywords.zh];
+ if (kws.some(kw => {
+ const k = normalizeText(kw).toLowerCase();
+ return clean.includes(k) || cleanHira.includes(toHiragana(k));
+ })) {
+ if (item.type === 'fortune') {
+ v4Context.lastTopic = 'サメ占い';
+ updateContextStrip();
+ const arr = FORTUNES[lang] || FORTUNES.ja;
+ return decorateProMode({ text: personalizeReply(arr[Math.floor(Math.random() * arr.length)]), tag: 'SHARK_RADAR_ORACLE' }, normRaw, lang);
+ }
+ if (item.type === 'datetime') {
+ const now = new Date();
+ return decorateProMode({
+ text: `🕒 深海クロノメーター報告！\n現在は【${now.toLocaleString()}】だぜ！`,
+ tag: 'V4_CHRONOMETER'
+ }, normRaw, lang);
+ }
+ return decorateProMode({ text: personalizeReply(item.response[lang] || item.response.ja), tag: 'TARGET_LOCKED' }, normRaw, lang);
+ }
+ }
+
+ const dictHit = searchDictionary(clean, normRaw, lang, false);
+ if (dictHit) return decorateProMode(dictHit, normRaw, lang);
+
+ if (emojis.length > 0) {
+ const known = emojis.find(e => EMOJI_MAP[e]);
+ if (known) {
+ return decorateProMode({ text: personalizeReply(EMOJI_MAP[known].reply), tag: 'EMOJI_SONAR_LOCK' }, normRaw, lang);
+ }
+ return decorateProMode({
+ text: `絵文字【 ${emojis.join(' ')} 】をしっかりキャッチしたぜ！🦈✨`,
+ tag: 'EMOJI_CATCH'
+ }, normRaw, lang);
+ }
+
+ const fb = FALLBACKS[lang] || FALLBACKS.ja;
+ return decorateProMode({ text: personalizeReply(fb[0]), tag: 'SONAR_EXPLORING' }, normRaw, lang);
+ }
+
+ function escapeHtml(str) {
+ return str.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+ }
+
+ function appendMsg(text, sender, tag = '') {
+ chatHistoryLog.push(`[${new Date().toLocaleTimeString()}] ${sender.toUpperCase()}${tag ? ' (' + tag + ')' : ''}: ${text}`);
+ const chatBox = document.getElementById('chatBox');
+ const row = document.createElement('div');
+ row.className = `msg-row ${sender}`;
+
+ const avatar = document.createElement('div');
+ avatar.className = 'msg-avatar';
+ avatar.innerHTML = sender === 'bot'
+ ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#0284c7"><path d="M4 20C4 20 6 12 11 8C14 5.6 18 3 20 3C19 8 18 13 14 16C10 19 6 20 4 20Z"/></svg>'
+ : '<svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+
+ const bubble = document.createElement('div');
+ bubble.className = 'msg-bubble';
+ if (tag) {
+ const tagSpan = document.createElement('span');
+ tagSpan.className = 'shark-radar-tag';
+ tagSpan.textContent = `▶ ${tag}`;
+ bubble.appendChild(tagSpan);
+ }
+ const content = document.createElement('div');
+ content.className = 'msg-content';
+ content.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+ bubble.appendChild(content);
+
+ if (sender === 'bot') {
+ const actions = document.createElement('div');
+ actions.className = 'msg-actions';
+ const copyBtn = document.createElement('button');
+ copyBtn.type = 'button';
+ copyBtn.className = 'btn-mini-copy';
+ copyBtn.textContent = 'COPY';
+ copyBtn.addEventListener('click', () => {
+ navigator.clipboard?.writeText(text);
+ copyBtn.textContent = 'COPIED!';
+ setTimeout(() => { copyBtn.textContent = 'COPY'; }, 1200);
+ });
+ actions.appendChild(copyBtn);
+ bubble.appendChild(actions);
+ }
+
+ row.appendChild(avatar);
+ row.appendChild(bubble);
+ chatBox.appendChild(row);
+ chatBox.scrollTop = chatBox.scrollHeight;
+ }
+
+ function sendUserMessage() {
+ const input = document.getElementById('userInput');
+ const text = input.value.trim();
+ if (!text) return;
+ const useDict = dictSearchArmed;
+ if (useDict) setDictArmed(false);
+ if (cyberShark) cyberShark.boost();
+ appendMsg(text, 'user');
+ input.value = '';
+ const delay = (document.getElementById('modeSelect')?.value === 'pro') ? 320 : 160;
+ setTimeout(() => {
+ const result = sharkThink(text, useDict);
+ appendMsg(result.text, 'bot', result.tag);
+ }, delay);
+ }
+
+ function renderChips() {
+ const bar = document.getElementById('quickBar');
+ bar.innerHTML = '';
+ for (const chip of CHIPS) {
+ const el = document.createElement('div');
+ el.className = 'quick-chip';
+ el.textContent = `${chip.icon} ${chip.label[uiLang]}`;
+ el.addEventListener('click', () => {
+ if (chip.focusInput) {
+ setDictArmed(true);
+ document.getElementById('userInput').focus();
+ }
+ document.getElementById('userInput').value = chip.text[uiLang];
+ sendUserMessage();
+ });
+ bar.appendChild(el);
+ }
+ }
+
+ function setLang(lang) {
+ uiLang = lang;
+ const t = UI[lang];
+ document.documentElement.lang = lang;
+ document.querySelectorAll('.lang-switch').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+ document.getElementById('appTitle').textContent = t.title;
+ document.getElementById('headerStatus').textContent = t.status;
+ document.getElementById('dictCounterPill').textContent = t.dictBadge(DICT_KNOWLEDGE.length);
+ document.getElementById('userInput').placeholder = t.placeholder;
+ document.getElementById('sendLabel').textContent = t.send;
+ document.getElementById('dictLabel').textContent = t.dict;
+ document.getElementById('trainerTitleText').textContent = t.trainerTitle;
+ document.getElementById('trainerHelp').textContent = t.trainerHelp;
+ document.getElementById('trainKeyword').placeholder = t.kwPlaceholder;
+ document.getElementById('trainResponse').placeholder = t.resPlaceholder;
+ document.getElementById('learnBtn').textContent = t.learn;
+ document.getElementById('welcomeBubble').innerHTML = `<span class="shark-radar-tag">▶ ${t.welcomeTag}</span>${t.welcome}`;
+ renderChips();
+ }
+
+ // Swimming Shark Canvas Animation
+ let cyberShark = null;
+ let swimEnabled = true;
+ let foods = [];
+
+ class AquaAkulaShark {
+ constructor(w, h) {
+ this.x = w * 0.3; this.y = h * 0.4;
+ this.angle = 0.2; this.targetAngle = 0.2;
+ this.speed = 2.0; this.boostTimer = 0; this.wiggle = 0;
+ this.segments = Array.from({ length: 7 }, (_, i) => ({ x: this.x - i * 16, y: this.y, angle: 0.2 }));
+ }
+ boost() { this.boostTimer = 65; }
+ update(w, h) {
+ this.speed = this.boostTimer > 0 ? 7.2 : 2.1;
+ if (this.boostTimer > 0) this.boostTimer--;
+ if (foods.length > 0) {
+ const f = foods[0];
+ const dx = f.x - this.x, dy = f.y - this.y;
+ if (Math.hypot(dx, dy) < 28) { foods.shift(); this.boostTimer = 38; }
+ else this.targetAngle = Math.atan2(dy, dx);
+ } else if (Math.random() < 0.025) {
+ this.targetAngle += (Math.random() - 0.5) * 0.8;
+ }
+ if (this.x < 70) this.targetAngle = 0;
+ else if (this.x > w - 70) this.targetAngle = Math.PI;
+ if (this.y < 70) this.targetAngle = Math.PI / 2;
+ else if (this.y > h - 70) this.targetAngle = -Math.PI / 2;
+
+ let diff = this.targetAngle - this.angle;
+ while (diff > Math.PI) diff -= Math.PI * 2;
+ while (diff < -Math.PI) diff += Math.PI * 2;
+ this.angle += diff * 0.05;
+ this.x += Math.cos(this.angle) * this.speed;
+ this.y += Math.sin(this.angle) * this.speed;
+ this.wiggle += this.boostTimer > 0 ? 0.22 : 0.08;
+
+ this.segments[0] = { x: this.x, y: this.y, angle: this.angle };
+ for (let i = 1; i < this.segments.length; i++) {
+ const prev = this.segments[i - 1], curr = this.segments[i];
+ const wave = Math.sin(this.wiggle - i * 0.55) * (0.05 + i * 0.03);
+ curr.angle = Math.atan2(curr.y - prev.y, curr.x - prev.x) + wave;
+ curr.x = prev.x + Math.cos(curr.angle) * 16;
+ curr.y = prev.y + Math.sin(curr.angle) * 16;
+ }
+ }
+ draw(ctx, isDark) {
+ ctx.save();
+ const widths = [13, 19, 18, 15, 11, 7, 3];
+ const left = [], right = [];
+ this.segments.forEach((seg, i) => {
+ const n = seg.angle + Math.PI / 2;
+ left.push({ x: seg.x + Math.cos(n) * widths[i], y: seg.y + Math.sin(n) * widths[i] });
+ right.push({ x: seg.x - Math.cos(n) * widths[i], y: seg.y - Math.sin(n) * widths[i] });
+ });
+ const head = this.segments[0], tail = this.segments[this.segments.length - 1];
+ ctx.beginPath();
+ ctx.moveTo(head.x + Math.cos(head.angle) * 24, head.y + Math.sin(head.angle) * 24);
+ left.forEach(p => ctx.lineTo(p.x, p.y));
+ ctx.lineTo(tail.x, tail.y);
+ for (let i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i].x, right[i].y);
+ ctx.closePath();
+ ctx.fillStyle = isDark ? '#0284c7' : '#0ea5e9';
+ ctx.fill();
+ ctx.restore();
+ }
+ }
+
+ function init() {
+ document.getElementById('sendBtn').addEventListener('click', sendUserMessage);
+ document.getElementById('dictBtn').addEventListener('click', () => {
+ setDictArmed(!dictSearchArmed);
+ document.getElementById('userInput').focus();
+ });
+ document.getElementById('userInput').addEventListener('keydown', e => {
+ if (e.key === 'Enter') sendUserMessage();
+ });
+ document.getElementById('trainerHeader').addEventListener('click', () => {
+ const body = document.getElementById('trainerBody');
+ body.classList.toggle('open');
+ document.getElementById('trainerToggleIcon').textContent = body.classList.contains('open') ? UI[uiLang].close : UI[uiLang].open;
+ });
+ document.getElementById('learnBtn').addEventListener('click', () => {
+ const kw = document.getElementById('trainKeyword').value.trim();
+ const res = document.getElementById('trainResponse').value.trim();
+ if (!kw || !res) return alert(UI[uiLang].alertEmpty);
+ const list = getLearnedKnowledge();
+ list.push({ keyword: kw, response: res });
+ saveLearnedKnowledge(list);
+ document.getElementById('trainKeyword').value = '';
+ document.getElementById('trainResponse').value = '';
+ appendMsg(UI[uiLang].trained(kw), 'bot', 'V4_TRAINING_COMPLETE');
+ });
+ document.getElementById('themeBtn').addEventListener('click', () => {
+ const dark = document.documentElement.dataset.theme !== 'dark';
+ document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+ });
+ document.getElementById('settingsBtn').addEventListener('click', () => {
+ document.getElementById('settingsPanel').classList.toggle('open');
+ });
+ document.getElementById('settingsClose').addEventListener('click', () => {
+ document.getElementById('settingsPanel').classList.remove('open');
+ });
+ document.querySelectorAll('.lang-switch').forEach(btn => {
+ btn.addEventListener('click', () => setLang(btn.dataset.lang));
+ });
+ document.getElementById('saveLogBtn').addEventListener('click', () => {
+ const blob = new Blob(['\uFEFF' + chatHistoryLog.join('\n')], { type: 'text/plain;charset=utf-8' });
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = 'aqua_akula_v4_log.txt';
+ a.click();
+ });
+ document.getElementById('exportMemBtn').addEventListener('click', () => {
+ const data = JSON.stringify(getLearnedKnowledge(), null, 2);
+ const blob = new Blob(['\uFEFF' + data], { type: 'application/json;charset=utf-8' });
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = 'aqua_akula_v4_memory.json';
+ a.click();
+ });
+ document.getElementById('clearChatBtn').addEventListener('click', () => {
+ const chatBox = document.getElementById('chatBox');
+ while (chatBox.children.length > 1) {
+ chatBox.removeChild(chatBox.lastChild);
+ }
+ chatHistoryLog.length = 0;
+ document.getElementById('settingsPanel').classList.remove('open');
+ });
+
+ function decodeFileBuffer(arrayBuffer) {
+ const bytes = new Uint8Array(arrayBuffer);
+ try {
+ return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+ } catch (e) {
+ try {
+ return new TextDecoder('shift_jis').decode(bytes);
+ } catch (e2) {
+ return new TextDecoder('utf-8').decode(bytes);
+ }
+ }
+ }
+
+ function handleImportedText(fileName, rawContent) {
+ const cleanText = rawContent.replace(/^\uFEFF/, '').normalize('NFKC');
+ const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+ const learned = getLearnedKnowledge();
+ let addedCount = 0;
+ let parsedJson = false;
+
+ if (fileName.toLowerCase().endsWith('.json')) {
+ try {
+ const data = JSON.parse(cleanText);
+ if (Array.isArray(data)) {
+ for (const item of data) {
+ if (item && item.keyword && item.response) {
+ learned.push({ keyword: normalizeText(String(item.keyword)), response: String(item.response).trim() });
+ addedCount++;
+ }
+ }
+ parsedJson = true;
+ }
+ } catch (e) {}
+ }
+
+ if (!parsedJson) {
+ for (const line of lines) {
+ const m = line.match(/^([^,:\t：]+)[,:\t：]+(.+)$/);
+ if (m && m[1].trim() && m[2].trim()) {
+ learned.push({ keyword: normalizeText(m[1]), response: m[2].trim() });
+ addedCount++;
+ }
+ }
+ }
+
+ if (addedCount > 0) {
+ saveLearnedKnowledge(learned);
+ appendMsg(`📂 ファイル【${fileName}】を読み込み、${addedCount} 件のデータを v4 メモリに統合したぜ！🦈✨`, 'bot', 'V4_FILE_IMPORT');
+ } else {
+ const preview = cleanText.slice(0, 180) + (cleanText.length > 180 ? '...' : '');
+ appendMsg(`📂 ファイル【${fileName}】を読み込んだぜ！\nプレビュー:\n${preview}`, 'bot', 'V4_FILE_READ');
+ }
+ }
+
+ function loadImportedFile(file) {
+ if (!file) return;
+ const reader = new FileReader();
+ reader.onload = ev => {
+ const text = decodeFileBuffer(ev.target.result);
+ handleImportedText(file.name, text);
+ };
+ reader.readAsArrayBuffer(file);
+ }
+
+ document.getElementById('importFileInput').addEventListener('change', e => {
+ const file = e.target.files && e.target.files[0];
+ loadImportedFile(file);
+ e.target.value = '';
+ });
+
+ const chatBoxEl = document.getElementById('chatBox');
+ chatBoxEl.addEventListener('dragover', e => { e.preventDefault(); });
+ chatBoxEl.addEventListener('drop', e => {
+ e.preventDefault();
+ const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+ loadImportedFile(file);
+ });
+
+ document.getElementById('swimToggle').addEventListener('change', e => {
+ swimEnabled = e.target.checked;
+ });
+
+ const canvas = document.getElementById('oceanCanvas');
+ const ctx = canvas.getContext('2d');
+ function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+ window.addEventListener('resize', resize);
+ resize();
+ cyberShark = new AquaAkulaShark(canvas.width, canvas.height);
+
+ window.addEventListener('click', e => {
+ if (!swimEnabled || e.target.closest('button, input, select, .settings-panel, .trainer-card, .quick-chip, .msg-bubble')) return;
+ foods.push({ x: e.clientX, y: e.clientY });
+ });
+
+ function loop() {
+ ctx.clearRect(0, 0, canvas.width, canvas.height);
+ if (swimEnabled) {
+ const isDark = document.documentElement.dataset.theme === 'dark';
+ foods.forEach(f => {
+ ctx.beginPath();
+ ctx.arc(f.x, f.y, 6, 0, Math.PI * 2);
+ ctx.fillStyle = '#22d3ee';
+ ctx.fill();
+ });
+ cyberShark.update(canvas.width, canvas.height);
+ cyberShark.draw(ctx, isDark);
+ }
+ requestAnimationFrame(loop);
+ }
+ loop();
+ updateContextStrip();
+ renderLearnedTags();
+ setLang('ja');
+ }
+
+ document.addEventListener('DOMContentLoaded', init);
+ </script>
+</body>
+</html>
